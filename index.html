@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mdMan - Batch Markdown to PDF Course Formatter</title>
+    <meta name="description" content="A powerful batch processor to convert Markdown files into a single, professional PDF course book.">
+    <link rel="icon" type="image/svg+xml" href="img/md.svg">
+    <meta property="og:image" content="img/banner.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vercel/geist@1.3.0/dist/fonts/geist-sans/variable/geist-sans.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+
+    <style>
+        /* Base font */
+        body {
+            font-family: 'Geist Sans', 'Poppins', sans-serif;
+            background-color: #f7f8fa; /* Cleaner, brighter bg */
+        }
+
+        /* Drag-over effect */
+        #drop-zone.drag-over {
+            border-style: solid;
+            border-color: #268ca7; /* NEW: Theme color */
+            background-color: #f0f9fa; /* NEW: Theme color light */
+        }
+
+        /* PDF Output Styling (v2 - "Wealth Course" Theme) 
+          NOTE: This CSS is now only for the *hidden render area* if it
+          were to be used. The actual PDF styling is now controlled
+          by the pdf-lib logic in JavaScript.
+        */
+        #pdf-content {
+            --theme-color: #268ca7; /* NEW: Default theme color */
+            --font-family-serif: 'Times New Roman', Times, serif;
+            --font-family-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --font-size-small: 10px;
+            --font-size-medium: 12px;
+            --font-size-large: 14px;
+            font-family: var(--font-family-main);
+            font-size: var(--font-size-main);
+            color: #333; /* Softer black */
+            line-height: 1.7; /* More breathing room */
+        }
+        .pdf-title-page { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 95vh; page-break-after: always; }
+        .pdf-title-page .logo { max-width: 200px; max-height: 150px; object-fit: contain; margin-bottom: 2.5rem; }
+        .pdf-title-page h1 { font-size: 2.8rem; font-weight: 800; color: var(--theme-color); margin-bottom: 0.75rem; line-height: 1.2; }
+        .pdf-title-page h2 { font-size: 1.6rem; font-weight: 500; color: #374151; }
+        
+        .pdf-main-content h1 { 
+            font-size: 2.2rem; 
+            font-weight: 700; 
+            color: var(--theme-color); 
+            border-bottom: 2px solid var(--theme-color); 
+            padding-bottom: 0.5rem; 
+            margin-top: 2.5rem; 
+            margin-bottom: 1.5rem; 
+            page-break-before: always; 
+        }
+        .pdf-main-content h1:first-of-type { page-break-before: auto; margin-top: 0; }
+        
+        .pdf-main-content h2 { 
+            font-size: 1.75rem; 
+            font-weight: 600; 
+            color: #111827; /* Darker for hierarchy */ 
+            margin-top: 2.5rem; 
+            margin-bottom: 1rem; 
+            page-break-after: avoid; 
+        }
+        .pdf-main-content h3 { 
+            font-size: 1.4rem; 
+            font-weight: 600; 
+            color: #374151; /* Dark gray */ 
+            margin-top: 2rem; 
+            margin-bottom: 0.75rem; 
+            page-break-after: avoid; 
+        }
+        .pdf-main-content p { 
+            margin-bottom: 1.25rem; 
+            text-align: justify; 
+        }
+        .pdf-main-content ul, .pdf-main-content ol { margin-bottom: 1.25rem; padding-left: 1.75rem; }
+        .pdf-main-content li { margin-bottom: 0.75rem; }
+        
+        /* Key "Pull-Quote" Styling */
+        .pdf-main-content blockquote { 
+            margin: 1.5rem 0; 
+            padding: 1rem 1.5rem; 
+            border-left: none;
+            background-color: #f0f9fa; /* NEW: Theme color light */
+            border-radius: 8px; /* NOTE: This is PDF-internal, keeping as-is */
+            color: #374151; 
+            font-style: italic; 
+        }
+        .pdf-main-content blockquote p {
+            margin-bottom: 0;
+        }
+
+        .pdf-main-content pre { background-color: #f0f9fa; /* NEW: Theme color light */ padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; }
+        .pdf-main-content code { font-family: 'Courier New', Courier, monospace; background-color: rgba(38, 140, 167, 0.1); /* NEW: Theme color lightest */ padding: 0.125rem 0.25rem; border-radius: 0.25rem; }
+        .pdf-main-content pre code { background-color: transparent; padding: 0; border-radius: 0; }
+        
+        .pdf-main-content table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; }
+        .pdf-main-content th, .pdf-main-content td { border: 1px solid #dee2e6; padding: 0.75rem; text-align: left; }
+        .pdf-main-content th { background-color: #f0f9fa; /* NEW: Theme color light */ font-weight: 600; }
+        
+        .pdf-main-content a { color: var(--theme-color); text-decoration: none; border-bottom: 1px dotted var(--theme-color); }
+        .pdf-main-content a:hover { text-decoration: underline; border-bottom: 1px solid var(--theme-color); }
+
+        /* Premium Image Styling */
+        .pdf-main-content img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 8px; 
+            margin-top: 1rem; 
+            margin-bottom: 1rem; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .pdf-footer { 
+            text-align: center; 
+            font-size: 0.8rem; 
+            color: #777; 
+            margin-top: 2.5rem; 
+            padding-top: 1rem; 
+            border-top: 1px solid #e5e7eb; 
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #268ca7; /* NEW: Theme color */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal Styling */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-content {
+            transition: all 0.25s ease;
+            max-height: 90vh;
+        }
+
+        /* NEW: Simple Toggle Switch CSS */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #268ca7;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #268ca7;
+        }
+        input:checked + .slider:before {
+            transform: translateX(16px);
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="sticky top-0 z-40 w-full bg-white shadow-sm border-b border-[#1a1a1a]/[0.15]">
+        <div class="container mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <img src="img/md.svg" alt="mdMan Logo" class="h-8 w-8" onerror="this.outerHTML='<i data-lucide=\'package\' class=\'h-8 w-8 text-[#268ca7]\'></i>'">
+                <span class="text-2xl font-light text-gray-800">mdMan</span>
+            </div>
+            
+            <nav class="hidden lg:flex items-center space-x-6">
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Homepage</a>
+                
+                <div class="relative group">
+                    <button class="text-gray-600 hover:text-[#268ca7] transition font-medium flex items-center space-x-1 focus:outline-none">
+                        <span>Tools</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </button>
+                    <div class="absolute z-10 w-56 mt-2 bg-white rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out transform -translate-y-2 group-hover:translate-y-0 border border-[#1a1a1a]/[0.15]">
+                        <div class="p-2">
+                            <a href="#" class="block px-4 py-2 text-sm text-white bg-[#268ca7] rounded-3xl font-medium">Course Formatting</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#268ca7] rounded-3xl transition">Ebook Formatting</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#268ca7] rounded-3xl transition">Storybook Formatting</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-[#268ca7] rounded-3xl transition">Document Formatting</a>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Github</a>
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Help</a>
+            </nav>
+
+            <button id="mobile-menu-button" class="lg:hidden p-2 rounded-3xl hover:bg-gray-100 text-gray-700 hover:text-[#268ca7] transition">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div id="mobile-menu" class="hidden lg:hidden container mx-auto p-4 border-t border-gray-100">
+            <nav class="flex flex-col space-y-4">
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Homepage</a>
+                
+                <div>
+                    <span class="text-gray-500 font-medium text-sm uppercase">Tools</span>
+                    <div class="flex flex-col mt-2 space-y-3 pl-4">
+                        <a href="#" class="text-white bg-[#268ca7] -ml-2 px-2 py-1 rounded-3xl font-medium">Course Formatting</a>
+                        <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Ebook Formatting</a>
+                        <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Storybook Formatting</a>
+                        <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Document Formatting</a>
+                    </div>
+                </div>
+
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Github</a>
+                <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Help</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <i data-lucide="file-text" class="w-12 h-12 mx-auto text-[#268ca7]"></i>
+            <h1 class="text-4xl font-light text-gray-800 mt-2">Course Formatting</h1>
+            <p class="text-lg text-gray-600 mt-2">Upload multiple Markdown files and process them into a single .zip.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <div class="lg:col-span-7 space-y-8">
+                
+                <div class="bg-white p-6 rounded-3xl shadow-lg border border-[#1a1a1a]/[0.15]">
+                    <h2 class="flex items-center text-xl font-semilight text-gray-700 mb-4">
+                        <i data-lucide="upload-cloud" class="w-5 h-5 mr-2 text-[#268ca7]"></i>
+                        1. Upload Files
+                    </h2>
+                    
+                    <div id="toast-container" class="mb-4 p-3 rounded-2xl hidden" style="background: linear-gradient(135deg, rgba(146, 197, 211, 0.65), rgba(183, 215, 223, 0.65)); border: 1px solid rgba(123, 179, 193, 0.5); backdrop-filter: blur(10px);">
+                        <div class="flex items-start space-x-2">
+                            <i id="toast-icon" data-lucide="lightbulb" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: #f9fafb;"></i>
+                            <div class="text-sm" style="color: #f9fafb;">
+                                <p id="toast-title" class="font-medium mb-1">Suggestion:</p>
+                                <p id="toast-message">Use numbered prefixes in your filenames for automatic ordering:</p>
+                                <p id="toast-example" class="font-mono text-xs mt-1 px-2 py-1 rounded" style="background-color: rgba(168, 209, 220, 0.4); color: #f9fafb;">01 - Introduction.md, 02 - Getting Started.md, 03 - Advanced Topics.md</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="file" id="file-input" multiple accept=".md,.markdown" class="hidden">
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-3xl p-8 text-center cursor-pointer hover:border-[#268ca7] hover:bg-f0f9fa transition">
+                        <i data-lucide="file-up" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-2 text-gray-600">Drag & drop .md files here</p>
+                        <p class="text-sm text-gray-500 mt-1">or</p>
+                        <button id="browse-files" class="mt-2 bg-gray-200 text-gray-800 font-semilight py-1 px-3 rounded-3xl text-sm hover:bg-gray-300 transition">
+                            Browse Files
+                        </button>
+                    </div>
+
+                    <div id="file-list-header" class="flex justify-between items-center mt-6 mb-2 hidden">
+                        <h3 class="text-lg font-semilight text-gray-600">File Queue</h3>
+                        <button id="clear-queue" class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center">
+                            <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
+                            Clear All
+                        </button>
+                    </div>
+                    <div id="file-list" class="space-y-2 max-h-96 overflow-y-auto">
+                        <div id="empty-queue-message" class="text-center text-gray-500 p-4">
+                            <i data-lucide="inbox" class="w-8 h-8 mx-auto text-gray-400"></i>
+                            <p class="mt-2">Your file queue is empty.</p>
+                        </div>
+                        </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-lg border border-[#1a1a1a]/[0.15]">
+                    <h2 class="flex items-center text-xl font-semilight text-gray-700 mb-4">
+                        <i data-lucide="settings-2" class="w-5 h-5 mr-2 text-[#268ca7]"></i>
+                        2. Global Settings
+                    </h2>
+                    <p class="text-sm text-gray-500 mb-4">
+                        These settings apply to all files unless overridden. Settings are saved locally.
+                    </p>
+                    
+                    <div class="flex space-x-2 mb-4">
+                        <input type="file" id="import-settings-input" class="hidden" accept="application/json">
+                        <button id="import-settings-btn" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2 px-3 rounded-3xl border border-gray-300 hover:bg-gray-200 transition text-sm flex items-center justify-center space-x-2">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Import</span>
+                        </button>
+                        <button id="export-settings-btn" class="flex-1 bg-gray-100 text-gray-700 font-medium py-2 px-3 rounded-3xl border border-gray-300 hover:bg-gray-200 transition text-sm flex items-center justify-center space-x-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Export</span>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
+                            <h3 class="font-medium text-lg text-gray-600">Branding</h3>
+                            <div>
+                                <label for="course-title" class="block text-sm font-medium text-gray-700">Course Title</label>
+                                <input type="text" id="course-title" value="My Awesome Wealth Course" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            <div>
+                                <label for="instructor-name" class="block text-sm font-medium text-gray-700">Instructor Name</label>
+                                <input type="text" id="instructor-name" value="Dr. Jane Doe" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            <div>
+                                <label for="logo-url" class="block text-sm font-medium text-gray-700">Logo URL (Optional)</label>
+                                <input type="text" id="logo-url" placeholder="https://..." class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            <div>
+                                <label for="footer-text" class="block text-sm font-medium text-gray-700">Footer Text</label>
+                                <input type="text" id="footer-text" value="© 2025 Wealth Builders Inc." class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            
+                            <div class="flex items-center justify-between pt-2">
+                                <label for="include-toc" class="text-sm font-medium text-gray-700">Table of Contents Page
+                                    <span class="block text-xs text-gray-500">Uses file starting with "00 - "</span>
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="include-toc" class="setting-input">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            </div>
+
+                        <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
+                            <h3 class="font-medium text-lg text-gray-600">Formatting</h3>
+                            <div>
+                                <label for="theme-color" class="block text-sm font-medium text-gray-700">Theme Color</label>
+                                <input type="color" id="theme-color" value="#268ca7" class="setting-input mt-1 block w-full h-10 border-gray-300 rounded-3xl cursor-pointer">
+                            </div>
+                            
+                            <div>
+                                <label for="font-family" class="block text-sm font-medium text-gray-700">Font Family</label>
+                                <select id="font-family" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                    <option value="geist">Geist (Default)</option>
+                                    <option value="lato">Lato</option>
+                                    <option value="poppins">Poppins</option>
+                                    <option value="montserrat">Montserrat (Variable)</option>
+                                    <option value="oswald">Oswald (Variable)</option>
+                                    <option value="rye">Rye</option>
+                                    <option value="alumni">Alumni Collegiate</option>
+                                    
+                                    <option disabled>--- Geist (Specific) ---</option>
+                                    <option value="geist-thin">Geist Thin</option>
+                                    <option value="geist-extralight">Geist ExtraLight</option>
+                                    <option value="geist-light">Geist Light</option>
+                                    <option value="geist-regular">Geist Regular</option>
+                                    <option value="geist-medium">Geist Medium</option>
+                                    <option value="geist-semilight">Geist Semilight</option>
+                                    <option value="geist-light">Geist light</option>
+                                    <option value="geist-extralight">Geist Extralight</option>
+                                    <option value="geist-black">Geist Black</option>
+                                    
+                                    <option disabled>--- Lato (Specific) ---</option>
+                                    <option value="lato-light">Lato Light</option>
+                                    <option value="lato-regular">Lato Regular</option>
+                                    <option value="lato-light">Lato light</option>
+                                    <option value="lato-black">Lato Black</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="font-size" class="block text-sm font-medium text-gray-700">Base Font Size</label>
+                                <select id="font-size" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                    <option value="small">Small (10px)</option>
+                                    <option value="medium" selected>Medium (12px)</option>
+                                    <option value="large">Large (14px)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="header-font-weight" class="block text-sm font-medium text-gray-700">Header Font Weight</label>
+                                <select id="header-font-weight" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                    <option value="thin">Thin</option>
+                                    <option value="extralight">Extra Light</option>
+                                    <option value="light">Light</option>
+                                    <option value="regular">Regular</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="semibold" selected>Semi Bold</option>
+                                    <option value="bold">Bold</option>
+                                    <option value="extrabold">Extra Bold</option>
+                                    <option value="black">Black</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label for="zip-filename" class="block text-sm font-medium text-gray-700">.zip Filename</label>
+                                <input type="text" id="zip-filename" value="wealth-course-batch" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            <div class="hidden">
+                                <label for="style-preset" class="block text-sm font-medium text-gray-700">Style Preset</label>
+                                <select id="style-preset" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]" disabled title="Style is set by pdf-lib logic">
+                                    <option value="wealth-course" selected>pdf-lib Default</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="bg-white p-6 rounded-3xl shadow-lg sticky top-8 border border-[#1a1a1a]/[0.15]">
+                    <h2 class="flex items-center text-xl font-semilight text-gray-700 mb-4">
+                        <i data-lucide="zap" class="w-5 h-5 mr-2 text-[#268ca7]"></i>
+                        3. Process Batch
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        Select your output format, then process all files in the queue.
+                    </p>
+                    
+                    <div>
+                        <label for="processing-mode" class="block text-sm font-medium text-gray-700">Processing Mode</label>
+                        <select id="processing-mode" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            <option value="zip">Download as .zip (Multiple Files)</option>
+                            <option value="single">Download as Single Combined PDF</option>
+                        </select>
+                    </div>
+
+                    <button id="generate-batch" class="w-full bg-[#268ca7] text-white font-light py-3 px-6 rounded-3xl shadow-md hover:bg-[#1e6a80] transition duration-300 ease-in-out flex items-center justify-center space-x-2 disabled:opacity-50 mt-6" disabled>
+                        <i data-lucide="package-check" class="w-5 h-5"></i>
+                        <span id="batch-button-text">Start Batch Process</span>
+                    </button>
+                    
+                    <div id="progress-area" class="mt-6 hidden">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-base font-medium text-[#268ca7]">Batch Progress</span>
+                            <span id="progress-text" class="text-sm font-medium text-[#268ca7]">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-[#268ca7] h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="global-status" class="text-sm text-gray-600 mt-2 text-center"></p>
+                    </div>
+
+                    <div id="error-message" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-3xl hidden">
+                        <p><strong>Global Error:</strong> <span id="error-text"></span></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-8 bg-white p-4 md:p-8 rounded-3xl shadow-lg border border-[#1a1a1a]/[0.15]">
+            <h2 class="flex items-center text-xl md:text-2xl font-light text-gray-800 mb-4 md:mb-6">
+                <i data-lucide="route" class="w-6 h-6 mr-3 text-[#268ca7]"></i>
+                Workflow Example
+            </h2>
+            <div class="relative">
+                <div class="relative flex items-start space-x-3 md:space-x-5 p-2 md:p-4">
+                    <div class="relative z-10 flex h-10 w-10 md:h-14 md:w-14 flex-shrink-0 items-center pt-1.5 md:pt-0">
+                        <img src="img/obi.svg" alt="Obsidian Logo" class="h-8 w-8 md:h-12 md:w-12" onerror="this.outerHTML='<i data-lucide=\'file-text\' class=\'h-8 w-8 md:h-12 md:w-12 text-[#268ca7]\'></i>'">
+                    </div>
+                    <div class="min-w-0 flex-1 pt-0 md:pt-1.5">
+                        <h3 class="text-md md:text-lg font-semilight text-gray-900">1. Create Content in Obsidian</h3>
+                        <p class="mt-1 text-sm md:text-base text-gray-600">Use <strong class="font-medium text-gray-800">Obsidian</strong> as your central hub. Write content, gather research, and organize all your files into a single folder within your vault.</p>
+                        <p class="mt-2 text-sm md:text-base text-gray-600">When ready, right-click that folder, choose "Show in system explorer," and copy the entire folder to an accessible location like your Desktop.</p>
+                        <p class="mt-2 text-sm md:text-base text-gray-600">Note: AI models like Kimi K2 are great for writing initial content due to their large 256,000 token context windows.</p>
+                    </div>
+                </div>
+    
+                <div class="relative flex items-start space-x-3 md:space-x-5 p-2 md:p-4">
+                    <div class="relative z-10 flex h-10 w-10 md:h-14 md:w-14 flex-shrink-0 items-center pt-1.5 md:pt-0">
+                        <img src="img/cube.svg" alt="Cursor Logo" class="h-8 w-8 md:h-12 md:w-12" onerror="this.outerHTML='<i data-lucide=\'edit\' class=\'h-8 w-8 md:h-12 md:w-12 text-[#268ca7]\'></i>'">
+                    </div>
+                    <div class="min-w-0 flex-1 pt-0 md:pt-1.5">
+                        <h3 class="text-md md:text-lg font-semilight text-gray-900">2. Edit & Refine with Cursor</h3>
+                        <p class="mt-1 text-sm md:text-base text-gray-600">Next, open <strong class="font-medium text-gray-800">Cursor</strong> and start a new project. Find and select the folder you just copied from Obsidian. Now you can use AI to batch-edit all your Markdown files at once. Provide instructions like:</p>
+                        <blockquote class="mt-3 p-3 bg-gray-50 border-l-4 border-[#268ca7] text-gray-700 rounded-r-3xl italic text-xs md:text-sm">
+                            "Please rename all files using a numbered prefix in the format 01 - Name, 02 - Name, You can decide the starting point and the order of the sections, but arrange them so the flow makes sense. For example, if one section is about skill vs. luck and another section is aswell, place the following section logically after it to build on that idea."
+                        </blockquote>
+                        <p class="mt-3 text-sm md:text-base text-gray-600">You can also use Cursor to:</p>
+                        <ul class="list-disc list-inside mt-2 pl-4 space-y-1 text-sm md:text-base text-gray-600">
+                            <li>Proofread and edit content</li>
+                            <li>Retone or reformat pages</li>
+                            <li>Generate additional pages as needed</li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <div class="relative flex items-start space-x-3 md:space-x-5 p-2 md:p-4">
+                    <div class="relative z-10 flex h-10 w-10 md:h-14 md:w-14 flex-shrink-0 items-center pt-1.5 md:pt-0">
+                        <img src="img/md.svg" alt="mdMan Logo" class="h-8 w-8 md:h-12 md:w-12" onerror="this.outerHTML='<i data-lucide=\'package-check\' class=\'h-8 w-8 md:h-12 md:w-12 text-[#268ca7]\'></i>'">
+                    </div>
+                    <div class="min-w-0 flex-1 pt-0 md:pt-1.5">
+                        <h3 class="text-md md:text-lg font-semilight text-gray-900">3. Process & Compile</h3>
+                        <p class="mt-1 text-sm md:text-base text-gray-600">Bring your polished .md files to <strong class="font-medium text-gray-800">mdMan</strong>.</p>
+                        <ul class="list-disc list-inside mt-2 pl-4 space-y-1 text-sm md:text-base text-gray-600">
+                            <li>Drag and drop all your files into the queue.</li>
+                            <li>Adjust the Global Settings to your liking (title, logo, theme).</li>
+                            <li>Use the "Single Combined PDF" mode for one master file.</li>
+                            <li>Process the batch and enjoy your premium, compiled course.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="pdf-render-area" class="invisible absolute -top-full left-0 w-[210mm] overflow-hidden">
+        <div id="pdf-content" class="p-[20mm]">
+            </div>
+    </div>
+
+    <div id="pdf-render-area-combined" class="invisible absolute -top-full left-0 w-[210mm] overflow-hidden">
+        </div>
+
+    <div id="settings-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 opacity-0 invisible">
+        <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-4xl opacity-0 transform -translate-y-10 overflow-y-auto border border-[#1a1a1a]/[0.15]">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-xl font-semilight text-gray-800">File-Specific Settings</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-4">
+                    You are editing settings for: <strong id="modal-file-name" class="text-gray-900"></strong>
+                    <br>
+                    These settings will override the global settings for this file only.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
+                        <h3 class="font-medium text-lg text-gray-600">Branding</h3>
+                        <div>
+                            <label for="modal-course-title" class="block text-sm font-medium text-gray-700">Course Title</label>
+                            <input type="text" id="modal-course-title" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                        </div>
+                        <div>
+                            <label for="modal-instructor-name" class="block text-sm font-medium text-gray-700">Instructor Name</label>
+                            <input type="text" id="modal-instructor-name" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                        </div>
+                        <div>
+                            <label for="modal-logo-url" class="block text-sm font-medium text-gray-700">Logo URL</label>
+                            <input type="text" id="modal-logo-url" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                        </div>
+                        <div>
+                            <label for="modal-footer-text" class="block text-sm font-medium text-gray-700">Footer Text</label>
+                            <input type="text" id="modal-footer-text" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                        </div>
+                        <div class="flex items-center justify-between pt-2">
+                            <label for="modal-include-toc" class="text-sm font-medium text-gray-700">Table of Contents Page
+                                <span class="block text-xs text-gray-500">Uses file starting with "00 - "</span>
+                            </label>
+                            <label class="switch">
+                                <input type="checkbox" id="modal-include-toc" class="setting-input">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        </div>
+
+                    <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
+                        <h3 class="font-medium text-lg text-gray-600">Formatting</h3>
+                        <div>
+                            <label for="modal-theme-color" class="block text-sm font-medium text-gray-700">Theme Color</label>
+                            <input type="color" id="modal-theme-color" class="mt-1 block w-full h-10 border-gray-300 rounded-3xl cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="modal-font-family" class="block text-sm font-medium text-gray-700">Font Family</label>
+                            <select id="modal-font-family" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                <option value="geist">Geist (Default)</option>
+                                <option value="lato">Lato</option>
+                                <option value="poppins">Poppins</option>
+                                <option value="montserrat">Montserrat (Variable)</option>
+                                <option value="oswald">Oswald (Variable)</option>
+                                <option value="rye">Rye</option>
+                                <option value="alumni">Alumni Collegiate</option>
+                                
+                                <option disabled>--- Geist (Specific) ---</option>
+                                <option value="geist-thin">Geist Thin</option>
+                                <option value="geist-extralight">Geist ExtraLight</option>
+                                <option value="geist-light">Geist Light</option>
+                                <option value="geist-regular">Geist Regular</option>
+                                <option value="geist-medium">Geist Medium</option>
+                                <option value="geist-semilight">Geist Semilight</option>
+                                <option value="geist-light">Geist light</option>
+                                <option value="geist-extralight">Geist Extralight</option>
+                                <option value="geist-black">Geist Black</option>
+                                
+                                <option disabled>--- Lato (Specific) ---</option>
+                                <option value="lato-light">Lato Light</option>
+                                <option value="lato-regular">Lato Regular</option>
+                                <option value="lato-light">Lato light</option>
+                                <option value="lato-black">Lato Black</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="modal-font-size" class="block text-sm font-medium text-gray-700">Base Font Size</label>
+                            <select id="modal-font-size" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                <option value="small">Small (10px)</option>
+                                <option value="medium">Medium (12px)</option>
+                                <option value="large">Large (14px)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="modal-header-font-weight" class="block text-sm font-medium text-gray-700">Header Font Weight</label>
+                            <select id="modal-header-font-weight" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                <option value="thin">Thin</option>
+                                <option value="extralight">Extra Light</option>
+                                <option value="light">Light</option>
+                                <option value="regular">Regular</option>
+                                <option value="medium">Medium</option>
+                                <option value="semibold">Semi Bold</option>
+                                <option value="bold">Bold</option>
+                                <option value="extrabold">Extra Bold</option>
+                                <option value="black">Black</option>
+                            </select>
+                        </div>
+                        <div class="hidden">
+                            <label for="modal-style-preset" class="block text-sm font-medium text-gray-700">Style Preset</label>
+                            <select id="modal-style-preset" class="mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]" disabled>
+                                <option value="wealth-course" selected>pdf-lib Default</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center p-4 bg-gray-50 border-t rounded-b-3xl">
+                <button id="clear-overrides" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                    Clear Overrides
+                </button>
+                <div>
+                    <button id="cancel-modal" class="bg-white text-gray-700 font-medium py-2 px-4 rounded-3xl border border-gray-300 hover:bg-gray-50 transition mr-2">
+                        Cancel
+                    </button>
+                    <button id="save-overrides" class="bg-[#268ca7] text-white font-medium py-2 px-4 rounded-3xl shadow-sm hover:bg-[#1e6a80] transition">
+                        Save Overrides
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full border-t border-gray-200 bg-white mt-12 border-t border-[#1a1a1a]/[0.15]">
+        <div class="container mx-auto p-8 text-center text-gray-500 flex flex-col items-center space-y-4">
+            <img src="https://www.blacnova.net/img/bn_black.png" alt="Blacnova Logo" class="h-10 opacity-70">
+            <p class="text-sm">&copy; 2025 mdMan by Blacnova. All rights reserved.</p>
+            <a href="https://buymeacoffee.com/galore" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-[#268ca7] hover:text-[#1e6a80] transition flex items-center space-x-1.5 px-4 py-2 rounded-3xl bg-gray-100 hover:bg-gray-200">
+                <i data-lucide="coffee" class="w-4 h-4"></i>
+                <span>Support Us</span>
+            </a>
+        </div>
+    </footer>
+
+
+    <script>
+        /**
+         * FormatterApp
+         * Encapsulates all logic for the batch PDF formatter.
+         *
+         * REWRITE: Now uses pdf-lib instead of html2pdf.js.
+         * UPDATE: Added dynamic font loading and TOC feature.
+         */
+        const FormatterApp = {
+            // --- State ---
+            fileQueue: [], // Stores { id, name, content, overrideSettings: null | {} }
+            SETTINGS_KEY: 'mdToPdfSettingsV4', // Updated key for new version
+
+            /**
+             * === NEW: FONT MAP ===
+             * Defines the local paths for all available font families.
+             * Each family needs a 'regular', 'light', and 'italic' variant.
+             * We use fallbacks (e.g., 'regular' for 'italic') if a variant is missing.
+             */
+            fontMap: {
+                // Geist (Complete Set)
+                'geist': {
+                    regular: 'fonts/Geist-Regular.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Regular.ttf' // Fallback
+                },
+                'geist-thin': {
+                    regular: 'fonts/Geist-Thin.ttf',
+                    light: 'fonts/Geist-Thin.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Thin.ttf'
+                },
+                'geist-extralight': {
+                    regular: 'fonts/Geist-ExtraLight.ttf',
+                    light: 'fonts/Geist-ExtraLight.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-ExtraLight.ttf'
+                },
+                 'geist-light': {
+                    regular: 'fonts/Geist-Light.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Light.ttf'
+                },
+                'geist-regular': {
+                    regular: 'fonts/Geist-Regular.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Regular.ttf'
+                },
+                'geist-medium': {
+                    regular: 'fonts/Geist-Medium.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Medium.ttf'
+                },
+                'geist-semibold': {
+                    regular: 'fonts/Geist-SemiBold.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-SemiBold.ttf'
+                },
+                'geist-bold': {
+                    regular: 'fonts/Geist-Bold.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Bold.ttf'
+                },
+                'geist-extrabold': {
+                    regular: 'fonts/Geist-ExtraBold.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-ExtraBold.ttf'
+                },
+                'geist-black': {
+                    regular: 'fonts/Geist-Black.ttf',
+                    light: 'fonts/Geist-Light.ttf',
+                    medium: 'fonts/Geist-Medium.ttf',
+                    semibold: 'fonts/Geist-SemiBold.ttf',
+                    bold: 'fonts/Geist-Bold.ttf',
+                    extrabold: 'fonts/Geist-ExtraBold.ttf',
+                    black: 'fonts/Geist-Black.ttf',
+                    thin: 'fonts/Geist-Thin.ttf',
+                    extralight: 'fonts/Geist-ExtraLight.ttf',
+                    italic: 'fonts/Geist-Black.ttf'
+                },
+
+                // Lato (Complete Set)
+                'lato': {
+                    regular: 'fonts/Lato-Regular.ttf',
+                    light: 'fonts/Lato-Light.ttf',
+                    medium: 'fonts/Lato-Regular.ttf', // Fallback
+                    semibold: 'fonts/Lato-Bold.ttf', // Fallback
+                    bold: 'fonts/Lato-Bold.ttf',
+                    extrabold: 'fonts/Lato-Black.ttf', // Fallback
+                    black: 'fonts/Lato-Black.ttf',
+                    thin: 'fonts/Lato-Light.ttf', // Fallback
+                    extralight: 'fonts/Lato-Light.ttf', // Fallback
+                    italic: 'fonts/Lato-Italic.ttf'
+                },
+                'lato-light': {
+                    regular: 'fonts/Lato-Light.ttf',
+                    light: 'fonts/Lato-Light.ttf',
+                    medium: 'fonts/Lato-Regular.ttf',
+                    semibold: 'fonts/Lato-Bold.ttf',
+                    bold: 'fonts/Lato-Bold.ttf',
+                    extrabold: 'fonts/Lato-Black.ttf',
+                    black: 'fonts/Lato-Black.ttf',
+                    thin: 'fonts/Lato-Light.ttf',
+                    extralight: 'fonts/Lato-Light.ttf',
+                    italic: 'fonts/Lato-Italic.ttf'
+                },
+                'lato-regular': {
+                    regular: 'fonts/Lato-Regular.ttf',
+                    light: 'fonts/Lato-Light.ttf',
+                    medium: 'fonts/Lato-Regular.ttf',
+                    semibold: 'fonts/Lato-Bold.ttf',
+                    bold: 'fonts/Lato-Bold.ttf',
+                    extrabold: 'fonts/Lato-Black.ttf',
+                    black: 'fonts/Lato-Black.ttf',
+                    thin: 'fonts/Lato-Light.ttf',
+                    extralight: 'fonts/Lato-Light.ttf',
+                    italic: 'fonts/Lato-Italic.ttf'
+                },
+                'lato-bold': {
+                    regular: 'fonts/Lato-Bold.ttf',
+                    light: 'fonts/Lato-Light.ttf',
+                    medium: 'fonts/Lato-Regular.ttf',
+                    semibold: 'fonts/Lato-Bold.ttf',
+                    bold: 'fonts/Lato-Bold.ttf',
+                    extrabold: 'fonts/Lato-Black.ttf',
+                    black: 'fonts/Lato-Black.ttf',
+                    thin: 'fonts/Lato-Light.ttf',
+                    extralight: 'fonts/Lato-Light.ttf',
+                    italic: 'fonts/Lato-Italic.ttf'
+                },
+                'lato-black': {
+                    regular: 'fonts/Lato-Black.ttf',
+                    light: 'fonts/Lato-Light.ttf',
+                    medium: 'fonts/Lato-Regular.ttf',
+                    semibold: 'fonts/Lato-Bold.ttf',
+                    bold: 'fonts/Lato-Bold.ttf',
+                    extrabold: 'fonts/Lato-Black.ttf',
+                    black: 'fonts/Lato-Black.ttf',
+                    thin: 'fonts/Lato-Light.ttf',
+                    extralight: 'fonts/Lato-Light.ttf',
+                    italic: 'fonts/Lato-Italic.ttf'
+                },
+                
+                // Poppins
+                'poppins': {
+                    regular: 'fonts/poppins-latin-400-normal.ttf',
+                    light: 'fonts/poppins-latin-400-normal.ttf', // Fallback
+                    medium: 'fonts/poppins-latin-500-normal.ttf',
+                    semibold: 'fonts/poppins-latin-500-normal.ttf', // Fallback
+                    bold: 'fonts/poppins-latin-500-normal.ttf', // Fallback
+                    extrabold: 'fonts/poppins-latin-500-normal.ttf', // Fallback
+                    black: 'fonts/poppins-latin-500-normal.ttf', // Fallback
+                    thin: 'fonts/poppins-latin-400-normal.ttf', // Fallback
+                    extralight: 'fonts/poppins-latin-400-normal.ttf', // Fallback
+                    italic: 'fonts/poppins-latin-400-normal.ttf'
+                },
+
+                // Variable Fonts
+                'montserrat': {
+                    regular: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    light: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    medium: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    semibold: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    bold: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    extrabold: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    black: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    thin: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    extralight: 'fonts/Montserrat-VariableFont_wght.ttf',
+                    italic: 'fonts/Montserrat-VariableFont_wght.ttf'
+                },
+                'oswald': {
+                    regular: 'fonts/Oswald-VariableFont_wght.ttf',
+                    light: 'fonts/Oswald-VariableFont_wght.ttf',
+                    medium: 'fonts/Oswald-VariableFont_wght.ttf',
+                    semibold: 'fonts/Oswald-VariableFont_wght.ttf',
+                    bold: 'fonts/Oswald-VariableFont_wght.ttf',
+                    extrabold: 'fonts/Oswald-VariableFont_wght.ttf',
+                    black: 'fonts/Oswald-VariableFont_wght.ttf',
+                    thin: 'fonts/Oswald-VariableFont_wght.ttf',
+                    extralight: 'fonts/Oswald-VariableFont_wght.ttf',
+                    italic: 'fonts/Oswald-VariableFont_wght.ttf'
+                },
+
+                // Specialty Fonts
+                'rye': {
+                    regular: 'fonts/Rye-Regular.ttf',
+                    light: 'fonts/Rye-Regular.ttf',
+                    medium: 'fonts/Rye-Regular.ttf',
+                    semibold: 'fonts/Rye-Regular.ttf',
+                    bold: 'fonts/Rye-Regular.ttf',
+                    extrabold: 'fonts/Rye-Regular.ttf',
+                    black: 'fonts/Rye-Regular.ttf',
+                    thin: 'fonts/Rye-Regular.ttf',
+                    extralight: 'fonts/Rye-Regular.ttf',
+                    italic: 'fonts/Rye-Regular.ttf'
+                },
+                'alumni': {
+                    regular: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    light: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    medium: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    semibold: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    bold: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    extrabold: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    black: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    thin: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    extralight: 'fonts/AlumniSansCollegiateOne-Regular.ttf',
+                    italic: 'fonts/AlumniSansCollegiateOne-Regular.ttf'
+                }
+            },
+            
+            // --- Initialization ---
+            init: function() {
+                this.cacheDOMElements();
+                this.loadSettings();
+                this.bindEvents();
+                this.updateUIState();
+                lucide.createIcons();
+                this.initPdfLibSettings();
+            },
+            
+            initPdfLibSettings: function() {
+                // Settings that are no longer manually controlled
+                $('#style-preset, #modal-style-preset').prop('disabled', true).attr('title', 'Styling is handled by pdf-lib logic');
+                
+                // Enable the font dropdowns
+                $('#font-family, #modal-font-family').prop('disabled', false).attr('title', 'Select a font family');
+            },
+
+            cacheDOMElements: function() {
+                this.dom = {
+                    dropZone: $('#drop-zone'),
+                    fileInput: $('#file-input'),
+                    browseFiles: $('#browse-files'),
+                    fileList: $('#file-list'),
+                    fileListHeader: $('#file-list-header'),
+                    emptyQueueMessage: $('#empty-queue-message'),
+                    clearQueue: $('#clear-queue'),
+                    settingInputs: $('.setting-input'),
+                    generateBatch: $('#generate-batch'),
+                    batchButtonText: $('#batch-button-text'),
+                    progressArea: $('#progress-area'),
+                    progressText: $('#progress-text'),
+                    progressBar: $('#progress-bar'),
+                    globalStatus: $('#global-status'),
+                    errorMessage: $('#error-message'),
+                    errorText: $('#error-text'),
+                    pdfRenderArea: $('#pdf-render-area'), // No longer used for generation
+                    pdfContent: $('#pdf-content'), // No longer used for generation
+                    modal: $('#settings-modal'),
+                    modalContent: $('.modal-content'),
+                    closeModal: $('#close-modal'),
+                    cancelModal: $('#cancel-modal'),
+                    saveOverrides: $('#save-overrides'),
+                    clearOverrides: $('#clear-overrides'),
+                    modalFileName: $('#modal-file-name'),
+                    importSettingsBtn: $('#import-settings-btn'),
+                    exportSettingsBtn: $('#export-settings-btn'),
+                    importSettingsInput: $('#import-settings-input'),
+                    mobileMenuButton: $('#mobile-menu-button'),
+                    mobileMenu: $('#mobile-menu'),
+                    toastContainer: $('#toast-container'),
+                    toastIcon: $('#toast-icon'),
+                    toastTitle: $('#toast-title'),
+                    toastMessage: $('#toast-message'),
+                    toastExample: $('#toast-example'),
+                };
+            },
+
+            // --- Event Binding ---
+            bindEvents: function() {
+                // Settings persistence
+                this.dom.settingInputs.on('change keyup', this.saveSettings.bind(this));
+
+                // Drag and Drop
+                this.dom.dropZone.on('dragover', (e) => this.handleDragOver(e));
+                this.dom.dropZone.on('dragleave', (e) => this.handleDragLeave(e));
+                this.dom.dropZone.on('drop', (e) => this.handleDrop(e));
+
+                // File Browsing
+                this.dom.browseFiles.on('click', () => this.dom.fileInput.click());
+                this.dom.fileInput.on('change', (e) => this.handleFileSelect(e));
+
+                // Import/Export
+                this.dom.exportSettingsBtn.on('click', this.exportSettings.bind(this));
+                this.dom.importSettingsBtn.on('click', () => this.dom.importSettingsInput.click());
+                this.dom.importSettingsInput.on('change', this.importSettings.bind(this));
+
+                // Queue Management
+                this.dom.fileList.on('click', '.remove-file-btn', (e) => this.removeFile(e));
+                this.dom.clearQueue.on('click', this.clearQueue.bind(this));
+
+                // Batch Processing
+                this.dom.generateBatch.on('click', this.processBatch.bind(this));
+
+                // Modal Events
+                this.dom.fileList.on('click', '.edit-file-btn', (e) => this.openSettingsModal(e));
+                this.dom.closeModal.on('click', this.closeSettingsModal.bind(this));
+                this.dom.cancelModal.on('click', this.closeSettingsModal.bind(this));
+                this.dom.modal.on('click', (e) => {
+                    if (e.target === this.dom.modal[0]) this.closeSettingsModal();
+                });
+                this.dom.saveOverrides.on('click', this.saveFileOverrides.bind(this));
+                this.dom.clearOverrides.on('click', this.clearFileOverrides.bind(this));
+
+                // Mobile Menu
+                this.dom.mobileMenuButton.on('click', this.toggleMobileMenu.bind(this));
+            },
+
+            toggleMobileMenu: function() {
+                this.dom.mobileMenu.toggleClass('hidden');
+                // Toggle icon
+                const icon = this.dom.mobileMenuButton.find('i');
+                if (this.dom.mobileMenu.hasClass('hidden')) {
+                    icon.attr('data-lucide', 'menu');
+                } else {
+                    icon.attr('data-lucide', 'x');
+                }
+                lucide.createIcons();
+            },
+
+            // --- Settings Management ---
+            getGlobalSettings: function() {
+                return {
+                    courseTitle: $('#course-title').val(),
+                    instructorName: $('#instructor-name').val(),
+                    logoUrl: $('#logo-url').val(),
+                    footerText: $('#footer-text').val(),
+                    includeToc: $('#include-toc').is(':checked'), // NEW
+                    themeColor: $('#theme-color').val(),
+                    fontFamily: $('#font-family').val(), // NEW: This is now the key, e.g., 'lato'
+                    fontSize: $('#font-size').val(),
+                    headerFontWeight: $('#header-font-weight').val(), // NEW: Header font weight
+                    zipFilename: $('#zip-filename').val() || 'batch-export',
+                    stylePreset: $('#style-preset').val(), // No longer used
+                };
+            },
+
+            saveSettings: function() {
+                const settings = this.getGlobalSettings();
+                localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings));
+            },
+
+            applySettingsToDOM: function(settings) {
+                if (!settings) return;
+                
+                $('#course-title').val(settings.courseTitle || 'My Awesome Wealth Course');
+                $('#instructor-name').val(settings.instructorName || 'Dr. Jane Doe');
+                $('#logo-url').val(settings.logoUrl || '');
+                $('#footer-text').val(settings.footerText || '© 2025 Wealth Builders Inc.');
+                $('#include-toc').prop('checked', settings.includeToc || false); // NEW
+                $('#theme-color').val(settings.themeColor || '#268ca7');
+                $('#font-family').val(settings.fontFamily || 'geist'); // NEW
+                $('#font-size').val(settings.fontSize || 'medium');
+                $('#header-font-weight').val(settings.headerFontWeight || 'semibold'); // NEW
+                $('#zip-filename').val(settings.zipFilename || 'wealth-course-batch');
+            },
+
+            loadSettings: function() {
+                const settings = JSON.parse(localStorage.getItem(this.SETTINGS_KEY));
+                if (settings) {
+                    this.applySettingsToDOM(settings);
+                }
+            },
+
+            // --- Import/Export Functions ---
+            exportSettings: function() {
+                try {
+                    const settings = this.getGlobalSettings();
+                    const jsonString = JSON.stringify(settings, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    saveAs(blob, 'mdman-settings.json');
+                } catch (err) {
+                    console.error("Error exporting settings:", err);
+                    this.showGlobalError("Failed to export settings. See console for details.");
+                }
+            },
+
+            importSettings: function(e) {
+                const file = e.target.files[0];
+                if (!file || file.type !== 'application/json') {
+                    if (file) {
+                        this.showGlobalError("Import failed: File must be a valid .json file.");
+                    }
+                    $(e.target).val(null); // Reset input
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const content = event.target.result;
+                        const settings = JSON.parse(content);
+                        
+                        // Basic validation (check for at least one known key)
+                        if (!settings.courseTitle && !settings.zipFilename) {
+                            throw new Error("File does not appear to be a valid settings file.");
+                        }
+
+                        this.applySettingsToDOM(settings);
+                        this.saveSettings(); // Save imported settings to localStorage
+                        
+                        this.dom.errorMessage.addClass('hidden');
+                        
+                    } catch (err) {
+                        console.error("Error importing settings:", err);
+                        this.showGlobalError(`Import failed: ${err.message}`);
+                    }
+                };
+                reader.onerror = () => {
+                    console.error("Failed to read imported file.");
+                    this.showGlobalError("Failed to read the selected file.");
+                };
+                
+                reader.readAsText(file);
+                $(e.target).val(null); // Reset input after read
+            },
+
+
+            // --- File & Queue Management ---
+            handleDragOver: function(e) {
+                e.preventDefault(); e.stopPropagation();
+                this.dom.dropZone.addClass('drag-over');
+            },
+
+            handleDragLeave: function(e) {
+                e.preventDefault(); e.stopPropagation();
+                this.dom.dropZone.removeClass('drag-over');
+            },
+
+            handleDrop: function(e) {
+                e.preventDefault(); e.stopPropagation();
+                this.dom.dropZone.removeClass('drag-over');
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length) {
+                    Array.from(files).forEach(file => this.addFileToQueue(file));
+                }
+            },
+
+            handleFileSelect: function(e) {
+                if (e.target.files.length) {
+                    Array.from(e.target.files).forEach(file => this.addFileToQueue(file));
+                }
+                $(e.target).val(null); // Reset input
+            },
+
+            addFileToQueue: function(file) {
+                if (!file.type.match('markdown') && !file.name.endsWith('.md')) {
+                    console.warn(`File "${file.name}" is not a Markdown file.`);
+                    return; 
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileId = 'file-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    const fileData = {
+                        id: fileId,
+                        name: file.name,
+                        size: file.size,
+                        content: e.target.result,
+                        overrideSettings: null 
+                    };
+                    this.fileQueue.push(fileData);
+                    
+                    this.fileQueue.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                    
+                    this.dom.fileList.children(':not(#empty-queue-message)').remove();
+                    
+                    this.fileQueue.forEach(f => {
+                        const hasOverrides = f.overrideSettings ? 'text-[#268ca7]' : 'text-gray-400';
+                        const fileHtml = `
+                            <div id="${f.id}" class="flex items-center justify-between p-3 bg-gray-50 rounded-3xl border border-gray-200 transition-all">
+                                <div class="flex items-center overflow-hidden mr-2">
+                                    <i data-lucide="file-text" class="w-5 h-5 mr-3 text-[#268ca7] flex-shrink-0"></i>
+                                    <span class="text-sm text-gray-800 truncate" title="${f.name}">${f.name}</span>
+                                    <span class="text-xs text-gray-500 ml-2 flex-shrink-0">(${this.formatBytes(f.size)})</span>
+                                </div>
+                                <div class="flex items-center space-x-2 flex-shrink-0">
+                                    <div id="${f.id}-status" class="text-sm text-gray-500">Uploaded</div>
+                                    <button class="edit-file-btn ${hasOverrides} hover:text-[#268ca7]" data-file-id="${f.id}" title="File-specific settings">
+                                        <i data-lucide="settings-2" class="w-5 h-5"></i>
+                                    </button>
+                                    <button class="remove-file-btn text-red-400 hover:text-red-600" data-file-id="${f.id}" title="Remove file">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        this.dom.fileList.append(fileHtml);
+                    });
+                    
+                    lucide.createIcons(); // Re-render icons
+                    this.updateUIState();
+                    this.checkFileQueueFormat(); // Check filename format and show/hide toast
+                };
+                reader.onerror = () => {
+                    console.error(`Failed to read file "${file.name}".`);
+                };
+                reader.readAsText(file);
+            },
+
+            removeFile: function(e) {
+                const fileId = $(e.currentTarget).data('file-id');
+                this.fileQueue = this.fileQueue.filter(f => f.id !== fileId);
+                $(`#${fileId}`).remove();
+                this.updateUIState();
+                this.checkFileQueueFormat(); // Check filename format and show/hide toast
+            },
+
+            clearQueue: function() {
+                this.fileQueue = [];
+                this.dom.fileList.children(':not(#empty-queue-message)').remove();
+                this.updateUIState();
+                this.checkFileQueueFormat(); // Check filename format and show/hide toast
+            },
+
+            // --- UI State & Helpers ---
+            updateUIState: function() {
+                if (this.fileQueue.length > 0) {
+                    this.dom.fileListHeader.removeClass('hidden');
+                    this.dom.emptyQueueMessage.addClass('hidden');
+                    this.dom.generateBatch.prop('disabled', false);
+                    this.dom.batchButtonText.text(`Start Batch Process (${this.fileQueue.length} files)`);
+                } else {
+                    this.dom.fileListHeader.addClass('hidden');
+                    this.dom.emptyQueueMessage.removeClass('hidden');
+                    this.dom.generateBatch.prop('disabled', true);
+                    this.dom.batchButtonText.text('Start Batch Process');
+                    this.dom.progressArea.addClass('hidden');
+                }
+            },
+
+            formatBytes: function(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            },
+
+            updateFileStatus: function(fileId, status, message = '') {
+                const $statusEl = $(`#${fileId}-status`);
+                switch (status) {
+                    case 'processing':
+                        $statusEl.html('<div class="spinner"></div>').removeClass().addClass('text-sm');
+                        break;
+                    case 'done':
+                        $statusEl.html('<i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>').removeClass().addClass('text-sm');
+                        break;
+                    case 'error':
+                        $statusEl.html(`<i data-lucide="alert-triangle" class="w-5 h-5 text-red-500" title="${message}"></i>`).removeClass().addClass('text-sm');
+                        break;
+                    case 'waiting':
+                    default:
+                        $statusEl.text('Uploaded').removeClass().addClass('text-sm text-gray-500');
+                }
+                lucide.createIcons();
+            },
+
+            // --- Toast System ---
+            showToast: function(type, title, message, example = '') {
+                // Set icon based on type
+                const iconMap = {
+                    'suggestion': 'lightbulb',
+                    'info': 'info',
+                    'warning': 'alert-triangle',
+                    'success': 'check-circle',
+                    'error': 'x-circle'
+                };
+                
+                this.dom.toastIcon.attr('data-lucide', iconMap[type] || 'info');
+                this.dom.toastTitle.text(title);
+                this.dom.toastMessage.text(message);
+                
+                if (example) {
+                    this.dom.toastExample.text(example).removeClass('hidden');
+                } else {
+                    this.dom.toastExample.addClass('hidden');
+                }
+                
+                this.dom.toastContainer.removeClass('hidden');
+                lucide.createIcons();
+            },
+
+            hideToast: function() {
+                this.dom.toastContainer.addClass('hidden');
+            },
+
+            checkFilenameFormat: function(filename) {
+                // Check if filename follows numbered prefix format (e.g., "01 - filename.md", "02 - filename.md")
+                const numberedPrefixPattern = /^\d+\s*-\s*.+\.md$/i;
+                return numberedPrefixPattern.test(filename);
+            },
+
+            checkFileQueueFormat: function() {
+                if (this.fileQueue.length === 0) {
+                    this.hideToast();
+                    return;
+                }
+                
+                const hasNonNumberedFiles = this.fileQueue.some(file => !this.checkFilenameFormat(file.name));
+                
+                if (hasNonNumberedFiles) {
+                    this.showToast(
+                        'suggestion',
+                        'Suggestion:',
+                        'Use numbered prefixes in your filenames for automatic ordering:',
+                        '01 - Introduction.md, 02 - Getting Started.md, 03 - Advanced Topics.md'
+                    );
+                } else {
+                    this.hideToast();
+                }
+            },
+
+            showGlobalError: function(message) {
+                this.dom.errorText.text(message);
+                this.dom.errorMessage.removeClass('hidden');
+                this.dom.progressArea.addClass('hidden');
+                this.dom.generateBatch.prop('disabled', false).removeClass('opacity-50');
+                this.dom.batchButtonText.text(`Start Batch Process (${this.fileQueue.length} files)`);
+            },
+
+            // --- Per-File Settings Modal ---
+            openSettingsModal: function(e) {
+                const fileId = $(e.currentTarget).data('file-id');
+                const file = this.fileQueue.find(f => f.id === fileId);
+                if (!file) return;
+
+                this.dom.modal.data('file-id', fileId);
+                this.dom.modalFileName.text(file.name);
+
+                const globalSettings = this.getGlobalSettings();
+                const settings = file.overrideSettings || globalSettings;
+
+                $('#modal-course-title').val(settings.courseTitle);
+                $('#modal-instructor-name').val(settings.instructorName);
+                $('#modal-logo-url').val(settings.logoUrl);
+                $('#modal-footer-text').val(settings.footerText);
+                $('#modal-include-toc').prop('checked', settings.includeToc); // NEW
+                $('#modal-theme-color').val(settings.themeColor);
+                $('#modal-font-family').val(settings.fontFamily); // NEW
+                $('#modal-font-size').val(settings.fontSize);
+                $('#modal-header-font-weight').val(settings.headerFontWeight || 'semibold'); // NEW
+            },
+
+            closeSettingsModal: function() {
+                this.dom.modal.addClass('invisible opacity-0');
+                this.dom.modalContent.addClass('opacity-0 -translate-y-10');
+                this.dom.modal.data('file-id', null);
+            },
+
+            saveFileOverrides: function() {
+                const fileId = this.dom.modal.data('file-id');
+                const file = this.fileQueue.find(f => f.id === fileId);
+                if (!file) return;
+
+                file.overrideSettings = {
+                    courseTitle: $('#modal-course-title').val(),
+                    instructorName: $('#modal-instructor-name').val(),
+                    logoUrl: $('#modal-logo-url').val(),
+                    footerText: $('#modal-footer-text').val(),
+                    includeToc: $('#modal-include-toc').is(':checked'), // NEW
+                    themeColor: $('#modal-theme-color').val(),
+                    fontFamily: $('#modal-font-family').val(), // NEW
+                    fontSize: $('#modal-font-size').val(),
+                    headerFontWeight: $('#modal-header-font-weight').val(), // NEW
+                    stylePreset: $('#modal-style-preset').val(), // No longer used
+                };
+
+                $(`#${fileId}`).find('.edit-file-btn').removeClass('text-gray-400').addClass('text-[#268ca7]');
+                
+                this.closeSettingsModal();
+            },
+
+            clearFileOverrides: function() {
+                const fileId = this.dom.modal.data('file-id');
+                const file = this.fileQueue.find(f => f.id === fileId);
+                if (!file) return;
+
+                file.overrideSettings = null;
+
+                $(`#${fileId}`).find('.edit-file-btn').removeClass('text-[#268ca7]').addClass('text-gray-400');
+
+                this.closeSettingsModal();
+            },
+
+
+            // =================================================================
+            // --- NEW: PDF-LIB CORE LOGIC (Replaces html2pdf.js) ---
+            // =================================================================
+
+            // --- NEW: Helper functions from generator.js ---
+
+            drawText: function(text, options) {
+                const { page, font, size, color, y, lineHeight, maxWidth, align = 'center' } = options;
+                const { width: pageWidth } = page.getSize();
+                // Ensure text is a string
+                const lines = this.wrapText(String(text || ''), font, size, maxWidth);
+                
+                const effectiveLineHeight = lineHeight || size * 1.4;
+                let currentY = y; 
+
+                lines.forEach(line => {
+                    const textWidth = font.widthOfTextAtSize(line, size);
+                    let x;
+                    if (align === 'center') {
+                         x = (pageWidth - textWidth) / 2;
+                    } else if (align === 'right') {
+                        x = pageWidth - textWidth - (options.margin || 0);
+                    } else {
+                        // left align
+                        x = options.margin || 0;
+                    }
+                    
+                    page.drawText(line, {
+                        x: x, y: currentY, font, size, color, lineHeight: effectiveLineHeight
+                    });
+                    currentY -= effectiveLineHeight;
+                });
+                return currentY; // Return the new Y position
+            },
+
+            // NEW: Draw text with inline formatting (bold, italic, etc.)
+            drawStyledText: function(text, options) {
+                const { page, font, boldFont, italicFont, size, color, y, lineHeight, maxWidth, align = 'left' } = options;
+                const { width: pageWidth } = page.getSize();
+                
+                // Parse inline markdown
+                const parseInlineMarkdown = (text) => {
+                    if (!text) return '';
+                    // Parse bold text **text** -> <b>text</b>
+                    let parsed = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    // Parse italic text *text* -> <i>text</i>
+                    parsed = parsed.replace(/\*(.*?)\*/g, '<i>$1</i>');
+                    // Parse inline code `text` -> <code>text</code>
+                    parsed = parsed.replace(/`(.*?)`/g, '<code>$1</code>');
+                    return parsed;
+                };
+                
+                const styledText = parseInlineMarkdown(text);
+                const lines = this.wrapText(styledText, font, size, maxWidth);
+                
+                const effectiveLineHeight = lineHeight || size * 1.4;
+                let currentY = y;
+                
+                lines.forEach(line => {
+                    // Split line into styled segments
+                    const segments = this.parseStyledSegments(line, font, boldFont, italicFont, size, color);
+                    
+                    let x = options.margin || 0;
+                    if (align === 'center') {
+                        const totalWidth = segments.reduce((sum, seg) => sum + seg.width, 0);
+                        x = (pageWidth - totalWidth) / 2;
+                    } else if (align === 'right') {
+                        const totalWidth = segments.reduce((sum, seg) => sum + seg.width, 0);
+                        x = pageWidth - totalWidth - (options.margin || 0);
+                    }
+                    
+                    segments.forEach(segment => {
+                        page.drawText(segment.text, {
+                            x: x, y: currentY, font: segment.font, size: segment.size, color: segment.color
+                        });
+                        x += segment.width;
+                    });
+                    
+                    currentY -= effectiveLineHeight;
+                });
+                return currentY;
+            },
+
+            // NEW: Parse text into styled segments
+            parseStyledSegments: function(text, regularFont, boldFont, italicFont, size, color) {
+                const segments = [];
+                
+                // If no styled elements, return as single segment
+                if (!text.includes('<b>') && !text.includes('<i>') && !text.includes('<code>')) {
+                    return [{
+                        text: text,
+                        font: regularFont,
+                        size: size,
+                        color: color,
+                        width: regularFont.widthOfTextAtSize(text, size)
+                    }];
+                }
+                
+                // Simple regex to find styled segments
+                const regex = /(<b>(.*?)<\/b>|<i>(.*?)<\/i>|<code>(.*?)<\/code>)/g;
+                let lastIndex = 0;
+                let match;
+                
+                while ((match = regex.exec(text)) !== null) {
+                    // Add any text before the match
+                    if (match.index > lastIndex) {
+                        const beforeText = text.substring(lastIndex, match.index);
+                        if (beforeText) {
+                            segments.push({
+                                text: beforeText,
+                                font: regularFont,
+                                size: size,
+                                color: color,
+                                width: regularFont.widthOfTextAtSize(beforeText, size)
+                            });
+                        }
+                    }
+                    
+                    // Add the styled segment
+                    if (match[1].startsWith('<b>')) {
+                        segments.push({
+                            text: match[2],
+                            font: boldFont,
+                            size: size,
+                            color: color,
+                            width: boldFont.widthOfTextAtSize(match[2], size)
+                        });
+                    } else if (match[1].startsWith('<i>')) {
+                        segments.push({
+                            text: match[3],
+                            font: italicFont,
+                            size: size,
+                            color: color,
+                            width: italicFont.widthOfTextAtSize(match[3], size)
+                        });
+                    } else if (match[1].startsWith('<code>')) {
+                        segments.push({
+                            text: match[4],
+                            font: regularFont, // Use regular font for code
+                            size: size * 0.9, // Slightly smaller
+                            color: color,
+                            width: regularFont.widthOfTextAtSize(match[4], size * 0.9)
+                        });
+                    }
+                    
+                    lastIndex = regex.lastIndex;
+                }
+                
+                // Add any remaining text
+                if (lastIndex < text.length) {
+                    const remainingText = text.substring(lastIndex);
+                    if (remainingText) {
+                        segments.push({
+                            text: remainingText,
+                            font: regularFont,
+                            size: size,
+                            color: color,
+                            width: regularFont.widthOfTextAtSize(remainingText, size)
+                        });
+                    }
+                }
+                
+                return segments;
+            },
+
+            wrapText: function(text, font, size, maxWidth) {
+                if (!text) return [''];
+                if (!maxWidth) return text.split('\n');
+                
+                // Handle potential non-string inputs
+                const textString = String(text);
+                
+                const words = textString.replace(/\n/g, ' \n ').split(' ');
+                let line = '';
+                const lines = [];
+                for (const word of words) {
+                    if (word === '\n') {
+                        lines.push(line);
+                        line = '';
+                        continue;
+                    }
+                    const testLine = line + (line ? ' ' : '') + word;
+                    const width = font.widthOfTextAtSize(testLine, size);
+                    if (width > maxWidth) {
+                        lines.push(line);
+                        line = word;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+                return lines;
+            },
+            
+            // --- NEW: pdf-lib Asset Fetching ---
+            
+            fetchFont: async function(url) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        throw new Error(`Font fetch failed with status ${res.status}: ${url}`);
+                    }
+                    return await res.arrayBuffer();
+                } catch (err) {
+                    console.error("Font fetch failed:", err);
+                    this.showGlobalError(`Failed to fetch font: ${url}. Check console. Make sure the 'fonts' folder is in the same directory as this HTML file.`);
+                    return null;
+                }
+            },
+            
+            fetchAndEmbedImage: async function(pdfDoc, url) {
+                if (!url) return null;
+                try {
+                    const res = await fetch(url); 
+                    if (!res.ok) {
+                         throw new Error(`Image fetch failed with status ${res.status}: ${url}`);
+                    }
+                    const imageBytes = await res.arrayBuffer();
+                    
+                    const uint8 = new Uint8Array(imageBytes);
+                    if (uint8[0] === 0xFF && uint8[1] === 0xD8 && uint8[2] === 0xFF) {
+                        return await pdfDoc.embedJpg(imageBytes);
+                    } else if (uint8[0] === 0x89 && uint8[1] === 0x50 && uint8[2] === 0x4E && uint8[3] === 0x47) {
+                         return await pdfDoc.embedPng(imageBytes);
+                    } else {
+                        console.warn(`Unknown image type for ${url}, attempting to embed as PNG.`);
+                        return await pdfDoc.embedPng(imageBytes);
+                    }
+                } catch (err) {
+                     console.error(`Failed to fetch or embed image: ${url}`, err);
+                     return null;
+                }
+            },
+
+            /**
+             * === NEW: DYNAMIC FONT LOADER ===
+             * Loads and embeds fonts based on the selected family key.
+             */
+            loadFonts: async function(pdfDoc, fontFamilyKey = 'geist') {
+                const family = this.fontMap[fontFamilyKey] || this.fontMap['geist'];
+                
+                const [regBytes, lightBytes, mediumBytes, semiboldBytes, boldBytes, extraboldBytes, blackBytes, thinBytes, extralightBytes, italicBytes] = await Promise.all([
+                    this.fetchFont(family.regular),
+                    this.fetchFont(family.light),
+                    this.fetchFont(family.medium),
+                    this.fetchFont(family.semibold),
+                    this.fetchFont(family.bold),
+                    this.fetchFont(family.extrabold),
+                    this.fetchFont(family.black),
+                    this.fetchFont(family.thin),
+                    this.fetchFont(family.extralight),
+                    this.fetchFont(family.italic)
+                ]);
+                
+                if (!regBytes || !lightBytes || !italicBytes) {
+                    throw new Error("One or more essential fonts failed to load.");
+                }
+
+                const [regular, light, medium, semibold, bold, extrabold, black, thin, extralight, italic] = await Promise.all([
+                    pdfDoc.embedFont(regBytes),
+                    pdfDoc.embedFont(lightBytes),
+                    mediumBytes ? pdfDoc.embedFont(mediumBytes) : pdfDoc.embedFont(regBytes),
+                    semiboldBytes ? pdfDoc.embedFont(semiboldBytes) : pdfDoc.embedFont(boldBytes || regBytes),
+                    boldBytes ? pdfDoc.embedFont(boldBytes) : pdfDoc.embedFont(regBytes),
+                    extraboldBytes ? pdfDoc.embedFont(extraboldBytes) : pdfDoc.embedFont(boldBytes || regBytes),
+                    blackBytes ? pdfDoc.embedFont(blackBytes) : pdfDoc.embedFont(boldBytes || regBytes),
+                    thinBytes ? pdfDoc.embedFont(thinBytes) : pdfDoc.embedFont(lightBytes),
+                    extralightBytes ? pdfDoc.embedFont(extralightBytes) : pdfDoc.embedFont(lightBytes),
+                    pdfDoc.embedFont(italicBytes)
+                ]);
+                
+                return { regular, light, medium, semibold, bold, extrabold, black, thin, extralight, italic };
+            },
+
+            getBaseFontSize: function(finalSettings) {
+                switch(finalSettings.fontSize) {
+                    case 'small': return 10;
+                    case 'large': return 14;
+                    case 'medium':
+                    default:
+                        return 12;
+                }
+            },
+
+            /**
+             * === UPDATED: RENDER MD TO PDF ===
+             * Now includes an 'options' object with 'isToc' flag.
+             */
+            renderMdToPdfDoc: async function(pdfDoc, markdownContent, finalSettings, fonts, options = {}) {
+                const { isToc = false, skipCoverPage = false } = options; // NEW: skipCoverPage flag
+                
+                const { PDFDocument, rgb, PageSizes } = PDFLib;
+                const { regular, light, italic } = fonts;
+                
+                const themeColorHex = finalSettings.themeColor || '#268ca7';
+                const titleColor = rgb(
+                    parseInt(themeColorHex.substr(1, 2), 16) / 255, 
+                    parseInt(themeColorHex.substr(3, 2), 16) / 255, 
+                    parseInt(themeColorHex.substr(5, 2), 16) / 255
+                );
+                const textColor = rgb(0, 0, 0);
+                const baseFontSize = this.getBaseFontSize(finalSettings);
+                
+                const [pageWidth, pageHeight] = PageSizes.A4;
+                const margin = 72; // 1 inch
+                const maxWidth = pageWidth - (margin * 2);
+
+                let page;
+                let currentY;
+                let pageCount = 1;
+                
+                // === FIXED: Cover page logic - only add if not skipping and not TOC ===
+                if (!isToc && !skipCoverPage) {
+                    page = pdfDoc.addPage(PageSizes.A4);
+                    currentY = pageHeight - margin;
+
+                    // Draw Logo
+                    if (finalSettings.logoUrl) {
+                        const logoImage = await this.fetchAndEmbedImage(pdfDoc, finalSettings.logoUrl);
+                        if (logoImage) {
+                            const dims = logoImage.scale(1); 
+                            const logoWidth = Math.min(dims.width, 200);
+                            const logoHeight = (logoWidth / dims.width) * dims.height;
+                            
+                            page.drawImage(logoImage, {
+                                x: (pageWidth - logoWidth) / 2,
+                                y: currentY - logoHeight,
+                                width: logoWidth,
+                                height: logoHeight,
+                            });
+                            currentY -= (logoHeight + 36);
+                        } else {
+                            currentY -= 72;
+                        }
+                    } else {
+                        currentY -= 72;
+                    }
+                    
+                    // Draw Titles (centered)
+                    currentY = this.drawText(finalSettings.courseTitle, { 
+                        page, font: light, size: 28, color: titleColor, y: currentY, maxWidth: maxWidth, align: 'center'
+                    });
+                    currentY -= 12;
+                    currentY = this.drawText(finalSettings.instructorName, { 
+                        page, font: regular, size: 18, color: textColor, y: currentY, maxWidth: maxWidth, align: 'center'
+                    });
+                    
+                    // Add footer to cover page
+                    const footerY = margin / 2;
+                    this.drawText(finalSettings.footerText, {
+                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                        y: footerY, maxWidth: maxWidth, align: 'left', margin: margin
+                    });
+                    this.drawText(String(pageCount), {
+                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                        y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
+                    });
+                    pageCount++;
+                }
+
+                // --- Content Pages ---
+                // Add a new page for content
+                    page = pdfDoc.addPage(PageSizes.A4);
+                currentY = pageHeight - margin;
+
+                const addPage = () => {
+                    // Add footer to current page before creating new one
+                    const footerY = margin / 2;
+                    this.drawText(finalSettings.footerText, {
+                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                        y: footerY, maxWidth: maxWidth, align: 'left', margin: margin
+                    });
+                    this.drawText(String(pageCount), {
+                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                        y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
+                    });
+                    
+                    page = pdfDoc.addPage(PageSizes.A4);
+                    pageCount++;
+                    return pageHeight - margin;
+                };
+
+                marked.setOptions({ breaks: true, gfm: true, tables: true, smartLists: true, smartypants: true });
+                const tokens = marked.lexer(markdownContent);
+
+                // Helper function to parse inline markdown (bold, italic, etc.)
+                const parseInlineMarkdown = (text) => {
+                    if (!text) return '';
+                    // Parse bold text **text** -> <b>text</b>
+                    let parsed = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    // Parse italic text *text* -> <i>text</i>
+                    parsed = parsed.replace(/\*(.*?)\*/g, '<i>$1</i>');
+                    // Parse inline code `text` -> <code>text</code>
+                    parsed = parsed.replace(/`(.*?)`/g, '<code>$1</code>');
+                    return parsed;
+                };
+
+                const checkY = (textHeight, minSpace = 0) => {
+                    // Add extra space buffer to prevent tight fits
+                    const buffer = 20;
+                    if (currentY - textHeight - minSpace - buffer < margin) {
+                        currentY = addPage();
+                    }
+                    return currentY;
+                };
+
+                for (const token of tokens) {
+                    let textHeight = 0;
+                    
+                    switch (token.type) {
+                        case 'heading':
+                            let headingSize;
+                            if (token.depth === 1) headingSize = 24;
+                            else if (token.depth === 2) headingSize = 18;
+                            else if (token.depth === 3) headingSize = 14;
+                            else headingSize = baseFontSize;
+
+                            // Get the selected header font weight
+                            const headerFontWeight = finalSettings.headerFontWeight || 'semibold';
+                            let headerFont;
+                            switch(headerFontWeight) {
+                                case 'thin': headerFont = fonts.thin || fonts.light; break;
+                                case 'extralight': headerFont = fonts.extralight || fonts.light; break;
+                                case 'light': headerFont = fonts.light; break;
+                                case 'regular': headerFont = fonts.regular; break;
+                                case 'medium': headerFont = fonts.medium || fonts.regular; break;
+                                case 'semibold': headerFont = fonts.semibold || fonts.bold || fonts.regular; break;
+                                case 'bold': headerFont = fonts.bold || fonts.regular; break;
+                                case 'extrabold': headerFont = fonts.extrabold || fonts.bold || fonts.regular; break;
+                                case 'black': headerFont = fonts.black || fonts.bold || fonts.regular; break;
+                                default: headerFont = fonts.semibold || fonts.bold || fonts.regular;
+                            }
+
+                            // Calculate actual text height including wrapping
+                            const headingLines = this.wrapText(token.text, headerFont, headingSize, maxWidth);
+                            textHeight = headingLines.length * (headingSize * 1.4);
+                            
+                            // Ensure heading has enough space (heading + spacing + some content)
+                            const minContentSpace = baseFontSize * 2; // At least 2 lines of content
+                            currentY = checkY(textHeight + 12, minContentSpace);
+                            
+                            currentY = this.drawText(token.text, {
+                                page, font: headerFont, size: headingSize, color: titleColor, 
+                                y: currentY, maxWidth: maxWidth, align: 'left', margin: margin
+                            });
+                            currentY -= 12;
+                            break;
+                            
+                        case 'paragraph':
+                            const lines = this.wrapText(token.text, regular, baseFontSize, maxWidth);
+                            textHeight = lines.length * (baseFontSize * 1.4);
+                            
+                            // For paragraphs, ensure we have space for the full paragraph
+                            currentY = checkY(textHeight, baseFontSize * 0.5);
+                            
+                            // Use styled text rendering for paragraphs to handle bold/italic
+                            currentY = this.drawStyledText(token.text, {
+                                page, font: regular, boldFont: light, italicFont: italic, size: baseFontSize, color: textColor, 
+                                y: currentY, maxWidth: maxWidth, align: 'left', margin: margin, lineHeight: baseFontSize * 1.4
+                            });
+                            currentY -= (baseFontSize * 0.5);
+                            break;
+
+                        case 'list':
+                            let listY = currentY;
+                            let itemIndex = 0;
+                            
+                            // Check if we have enough space for at least the first item
+                            const firstItem = token.items[0];
+                            if (firstItem) {
+                                const bullet = token.ordered ? '1. ' : '• ';
+                                const firstItemText = bullet + firstItem.text;
+                                const firstItemLines = this.wrapText(firstItemText, regular, baseFontSize, maxWidth - 20);
+                                const firstItemHeight = firstItemLines.length * (baseFontSize * 1.4);
+                                
+                                if (listY - firstItemHeight - 20 < margin) {
+                                    listY = addPage();
+                                }
+                            }
+                            
+                            for (const item of token.items) {
+                                const bullet = token.ordered ? `${itemIndex + 1}. ` : '• ';
+                                const itemText = bullet + item.text;
+                                const itemLines = this.wrapText(itemText, regular, baseFontSize, maxWidth - 20);
+                                textHeight = itemLines.length * (baseFontSize * 1.4);
+                                
+                                // Check if we need a new page for this item
+                                if (listY - textHeight - 10 < margin) {
+                                    listY = addPage();
+                                }
+
+                                listY = this.drawStyledText(itemText, {
+                                    page, font: regular, boldFont: light, italicFont: italic, size: baseFontSize, color: textColor,
+                                    y: listY, maxWidth: maxWidth - 20, align: 'left', margin: margin + 20, lineHeight: baseFontSize * 1.4
+                                });
+                                listY -= (baseFontSize * 0.5);
+                                itemIndex++;
+                            }
+                            currentY = listY;
+                            break;
+
+                        case 'blockquote':
+                            const bqLines = this.wrapText(token.text, italic, baseFontSize, maxWidth - 20);
+                            textHeight = bqLines.length * (baseFontSize * 1.4);
+                            currentY = checkY(textHeight + 10);
+                            page.drawRectangle({
+                                x: margin,
+                                y: currentY - textHeight - 5,
+                                width: maxWidth,
+                                height: textHeight + 10,
+                                color: rgb(0.95, 0.95, 0.95),
+                            });
+                            currentY -= 5;
+                            currentY = this.drawText(token.text, {
+                                page, font: italic, size: baseFontSize, color: rgb(0.2, 0.2, 0.2), 
+                                y: currentY, maxWidth: maxWidth - 20, align: 'left', margin: margin + 10, lineHeight: baseFontSize * 1.4
+                            });
+                            currentY -= (baseFontSize + 5);
+                            break;
+
+                        case 'image':
+                            currentY = checkY(200);
+                            const img = await this.fetchAndEmbedImage(pdfDoc, token.href);
+                            if (img) {
+                                const dims = img.scale(1);
+                                const imgWidth = Math.min(dims.width, maxWidth);
+                                const imgHeight = (imgWidth / dims.width) * dims.height;
+                                currentY = checkY(imgHeight + 12);
+                                
+                                page.drawImage(img, {
+                                    x: (pageWidth - imgWidth) / 2,
+                                    y: currentY - imgHeight,
+                                    width: imgWidth,
+                                    height: imgHeight,
+                                });
+                                currentY -= (imgHeight + 12);
+                            }
+                            break;
+                            
+                        case 'space':
+                            currentY -= (baseFontSize * 1.4);
+                            break;
+                            
+                        case 'hr':
+                            currentY = checkY(12);
+                            page.drawLine({
+                                start: { x: margin, y: currentY - 6 },
+                                end: { x: pageWidth - margin, y: currentY - 6 },
+                                thickness: 1,
+                                color: rgb(0.8, 0.8, 0.8),
+                            });
+                            currentY -= 12;
+                            break;
+                            
+                        default:
+                            console.log('Unhandled token type:', token.type, token);
+                    }
+                }
+                
+                // Draw footer on the last page
+                const footerY = margin / 2;
+                this.drawText(finalSettings.footerText, {
+                    page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                    y: footerY, maxWidth: maxWidth, align: 'left', margin: margin
+                });
+                this.drawText(String(pageCount), {
+                    page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                    y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
+                });
+            },
+
+            /**
+             * Generates a PDF for a single file and returns its ArrayBuffer.
+             * This function now loads the fonts based on settings.
+             */
+            generatePdfBuffer: async function(markdownContent, finalSettings, options = {}) {
+                const { PDFDocument } = PDFLib;
+                
+                const pdfDoc = await PDFDocument.create();
+                pdfDoc.registerFontkit(fontkit);
+                
+                // Load fonts based on the finalSettings.fontFamily key
+                const fonts = await this.loadFonts(pdfDoc, finalSettings.fontFamily);
+                
+                await this.renderMdToPdfDoc(pdfDoc, markdownContent, finalSettings, fonts, options);
+
+                return await pdfDoc.save();
+            },
+
+            // --- Main Batch Process (Rewritten for pdf-lib) ---
+            processBatch: async function() {
+                this.dom.generateBatch.prop('disabled', true).addClass('opacity-50');
+                this.dom.batchButtonText.text('Processing... Please Wait');
+                this.dom.errorMessage.addClass('hidden');
+                this.dom.progressArea.removeClass('hidden');
+                this.dom.progressBar.css('width', '0%');
+                this.dom.progressText.text('0%');
+                this.dom.globalStatus.text('Initializing batch...');
+
+                const globalSettings = this.getGlobalSettings();
+                const processingMode = $('#processing-mode').val();
+                let filesProcessed = 0;
+                let filesFailed = 0;
+                
+                this.fileQueue.forEach(file => this.updateFileStatus(file.id, 'waiting'));
+                
+                // --- LOGIC PATH: .ZIP (Multiple Files) ---
+                if (processingMode === 'zip') {
+                    // In zip mode, TOC setting is ignored, and "00 -" files are processed normally.
+                    const zip = new JSZip();
+                    
+                    for (const file of this.fileQueue) {
+                        try {
+                            console.log(`Starting processing of ${file.name}`);
+                            this.dom.globalStatus.text(`Processing: ${file.name}...`);
+                            this.updateFileStatus(file.id, 'processing');
+
+                            const finalSettings = { ...globalSettings, ...(file.overrideSettings || {}) };
+
+                            // Check if this is a TOC file (for zip, this just means skipping the title page)
+                            const isTocFile = globalSettings.includeToc && file.name.startsWith('00 -');
+
+                            console.log(`Generating PDF for ${file.name}...`);
+                            const pdfBytes = await this.generatePdfBuffer(file.content, finalSettings, { isToc: isTocFile });
+                            
+                            const pdfName = file.name.replace(/\.md$|\.markdown$/, '.pdf');
+                            zip.file(pdfName, pdfBytes);
+
+                            console.log(`Completed processing ${file.name}`);
+                            this.updateFileStatus(file.id, 'done');
+                            filesProcessed++;
+
+                        } catch (err) {
+                            console.error(`Failed to process ${file.name}:`, err);
+                            this.updateFileStatus(file.id, 'error', err.message);
+                            filesFailed++;
+                        }
+                        
+                        const percent = Math.round(((filesProcessed + filesFailed) / this.fileQueue.length) * 100);
+                        this.dom.progressBar.css('width', `${percent}%`);
+                        this.dom.progressText.text(`${percent}%`);
+                    }
+
+                    // Finalize Zip
+                    if (filesProcessed > 0) {
+                        this.dom.globalStatus.text('Compressing files into .zip...');
+                        try {
+                            const zipBlob = await zip.generateAsync({ type: 'blob' });
+                            saveAs(zipBlob, `${globalSettings.zipFilename}.zip`);
+                            this.dom.globalStatus.text(`Batch complete! ${filesProcessed} files processed, ${filesFailed} failed.`);
+                        } catch (err) {
+                            this.showGlobalError('Failed to create .zip file. ' + err.message);
+                            console.error(err);
+                        }
+                    } else if (filesFailed > 0) {
+                         this.showGlobalError('All files failed to process. Check console for errors.');
+                    } else {
+                        this.showGlobalError('No files were processed.');
+                    }
+                } 
+                
+                // --- LOGIC PATH: SINGLE COMBINED PDF ---
+                else if (processingMode === 'single') {
+                    this.dom.globalStatus.text('Initializing combined PDF...');
+                    const { PDFDocument } = PDFLib;
+                    
+                    try {
+                        const combinedDoc = await PDFDocument.create();
+                        combinedDoc.registerFontkit(fontkit);
+                        
+                        // Load fonts ONCE based on GLOBAL settings.
+                        // Note: This means per-file font overrides won't work in combined mode.
+                        this.dom.globalStatus.text('Loading fonts...');
+                        const fonts = await this.loadFonts(combinedDoc, globalSettings.fontFamily);
+
+                        // === NEW TOC LOGIC ===
+                        let tocFile = null;
+                        let contentFiles = [...this.fileQueue];
+                        
+                        if (globalSettings.includeToc) {
+                            tocFile = contentFiles.find(f => f.name.startsWith('00 -'));
+                            if (tocFile) {
+                                contentFiles = contentFiles.filter(f => f.id !== tocFile.id);
+                                
+                                // 1. Render TOC file FIRST
+                                this.dom.globalStatus.text(`Appending TOC: ${tocFile.name}...`);
+                                this.updateFileStatus(tocFile.id, 'processing');
+                                // Use global settings, but mark as TOC
+                                await this.renderMdToPdfDoc(combinedDoc, tocFile.content, globalSettings, fonts, { isToc: true });
+                                this.updateFileStatus(tocFile.id, 'done');
+                                filesProcessed++;
+                            }
+                        }
+                        // === END NEW TOC LOGIC ===
+
+                        // 3. Loop and append remaining content files
+                        let isFirstContentFile = true;
+                        for (const file of contentFiles) {
+                            // Per-file overrides are ignored in single mode for font consistency
+                            const finalSettings = { ...globalSettings, ...(file.overrideSettings || {}), fontFamily: globalSettings.fontFamily };
+                            
+                            try {
+                                console.log(`Starting single PDF processing of ${file.name}`);
+                                this.dom.globalStatus.text(`Appending: ${file.name}...`);
+                                this.updateFileStatus(file.id, 'processing');
+                                
+                                // Skip cover page for all files after the first one
+                                const skipCoverPage = isFirstContentFile ? false : true;
+                                console.log(`Rendering ${file.name} with skipCoverPage: ${skipCoverPage}`);
+                                await this.renderMdToPdfDoc(combinedDoc, file.content, finalSettings, fonts, { 
+                                    isToc: false, 
+                                    skipCoverPage: skipCoverPage 
+                                });
+                                
+                                isFirstContentFile = false;
+                                console.log(`Completed single PDF processing of ${file.name}`);
+                                this.updateFileStatus(file.id, 'done');
+                                filesProcessed++;
+                            } catch (err) {
+                                console.error(`Failed to append ${file.name}:`, err);
+                                this.updateFileStatus(file.id, 'error', err.message);
+                                filesFailed++;
+                            }
+                            
+                            const percent = Math.round(((filesProcessed + filesFailed) / this.fileQueue.length) * 100);
+                            this.dom.progressBar.css('width', `${percent}%`);
+                            this.dom.progressText.text(`${percent}%`);
+                        }
+                        
+                        // 4. Save the combined doc
+                        if (filesProcessed > 0) {
+                            this.dom.globalStatus.text('Saving combined PDF...');
+                            const pdfBytes = await combinedDoc.save();
+                            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                            const pdfName = `${globalSettings.zipFilename}.pdf`;
+                            saveAs(blob, pdfName);
+                            this.dom.globalStatus.text(`Batch complete! ${filesProcessed} files combined, ${filesFailed} failed.`);
+                        } else if (filesFailed > 0) {
+                             this.showGlobalError('All files failed to process. Check console for errors.');
+                        } else {
+                             this.showGlobalError('No files were processed.');
+                        }
+
+                    } catch (err) {
+                        this.showGlobalError('Failed to create combined PDF. ' + err.message);
+                        console.error(err);
+                    }
+                }
+
+                // 6. Re-enable UI
+                this.dom.generateBatch.prop('disabled', false).removeClass('opacity-50');
+                this.dom.batchButtonText.text(`Start Batch Process (${this.fileQueue.length} files)`);
+            }
+        };
+
+        // --- Document Ready ---
+        $(document).ready(function() {
+            // Check for dependencies
+            if (typeof $ === 'undefined' || 
+                typeof marked === 'undefined' || 
+                typeof PDFLib === 'undefined' || 
+                typeof fontkit === 'undefined' || 
+                typeof JSZip === 'undefined' || 
+                typeof saveAs === 'undefined') {
+                
+                console.error("One or more critical libraries failed to load. App cannot start.");
+                $('body').html('<h1 style="color: red; text-align: center; margin-top: 50px;">Error: A required library (jQuery, marked, pdf-lib, fontkit, JSZip, or FileSaver) failed to load. Check your internet connection or browser console.</h1>');
+                return;
+            }
+            FormatterApp.init();
+        });
+    </script>
+</body>
+</html>
