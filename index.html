@@ -206,6 +206,73 @@
         input:focus + .slider {
             box-shadow: 0 0 1px #268ca7;
         }
+
+        /* === COLOR CIRCLE STYLING === */
+        .color-circle {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-circle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(38, 140, 167, 0.15);
+        }
+
+        .color-circle input[type="color"] {
+            opacity: 0;
+            width: 48px;
+            height: 48px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .color-circle .circle-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            pointer-events: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .color-circle:hover .circle-border {
+            border-color: #268ca7;
+        }
+
+        .color-circle input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-circle input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+        /* Ensure the color input fully fills the circle with no white spacing */
+        .color-circle input[type="color"] {
+            -webkit-appearance: none;
+            appearance: none;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            width: 3rem; /* matches w-12 */
+            height: 3rem; /* matches h-12 */
+            overflow: hidden;
+            background: none;
+        }
+        .color-circle input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+        /* Custom visual circle for robust cross-browser display */
+        .color-visual {
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+        }
         input:checked + .slider:before {
             transform: translateX(16px);
         }
@@ -240,6 +307,10 @@
                 </div>
 
                 <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Github</a>
+                <a href="https://buymeacoffee.com/galore" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-[#268ca7] transition font-medium inline-flex items-center">
+                    <span>Support</span>
+                    <i data-lucide="heart" class="w-4 h-4 text-[#92c5d3] ml-1"></i>
+                </a>
                 <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Help</a>
             </nav>
 
@@ -263,6 +334,10 @@
                 </div>
 
                 <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Github</a>
+                <a href="https://buymeacoffee.com/galore" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-[#268ca7] transition font-medium inline-flex items-center">
+                    <span>Support</span>
+                    <i data-lucide="heart" class="w-4 h-4 text-[#92c5d3] ml-1"></i>
+                </a>
                 <a href="#" class="text-gray-600 hover:text-[#268ca7] transition font-medium">Help</a>
             </nav>
         </div>
@@ -287,11 +362,11 @@
                     
                     <div id="toast-container" class="mb-4 p-3 rounded-2xl hidden" style="background: linear-gradient(135deg, rgba(146, 197, 211, 0.65), rgba(183, 215, 223, 0.65)); border: 1px solid rgba(123, 179, 193, 0.5); backdrop-filter: blur(10px);">
                         <div class="flex items-start space-x-2">
-                            <i id="toast-icon" data-lucide="lightbulb" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: #f9fafb;"></i>
-                            <div class="text-sm" style="color: #f9fafb;">
+                            <i id="toast-icon" data-lucide="lightbulb" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: #353535;"></i>
+                            <div class="text-sm" style="color: #353535;">
                                 <p id="toast-title" class="font-medium mb-1">Suggestion:</p>
                                 <p id="toast-message">Use numbered prefixes in your filenames for automatic ordering:</p>
-                                <p id="toast-example" class="font-mono text-xs mt-1 px-2 py-1 rounded" style="background-color: rgba(168, 209, 220, 0.4); color: #f9fafb;">01 - Introduction.md, 02 - Getting Started.md, 03 - Advanced Topics.md</p>
+                                <p id="toast-example" class="font-mono text-xs mt-1 px-2 py-1 rounded" style="background-color: rgba(168, 209, 220, 0.4); color: #353535;">01 - Introduction.md, 02 - Getting Started.md, 03 - Advanced Topics.md</p>
                             </div>
                         </div>
                     </div>
@@ -361,6 +436,19 @@
                                 <label for="footer-text" class="block text-sm font-medium text-gray-700">Footer Text</label>
                                 <input type="text" id="footer-text" value="© 2025 Wealth Builders Inc." class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
                             </div>
+                            <div>
+                                <label for="zip-filename" class="block text-sm font-medium text-gray-700">.zip Filename</label>
+                                <input type="text" id="zip-filename" value="wealth-course-batch" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            </div>
+                            <div>
+                                <label for="course-type" class="block text-sm font-medium text-gray-700">Course Type</label>
+                                <select id="course-type" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                    <option value="wealth" selected>Wealth Course (Default)</option>
+                                    <option value="education">Education</option>
+                                    <option value="lecture">Lecture</option>
+                                    <option value="general">General</option>
+                                </select>
+                            </div>
                             
                             <div class="flex items-center justify-between pt-2">
                                 <label for="include-toc" class="text-sm font-medium text-gray-700">Table of Contents Page
@@ -376,8 +464,65 @@
                         <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
                             <h3 class="font-medium text-lg text-gray-600">Formatting</h3>
                             <div>
-                                <label for="theme-color" class="block text-sm font-medium text-gray-700">Theme Color</label>
-                                <input type="color" id="theme-color" value="#268ca7" class="setting-input mt-1 block w-full h-10 border-gray-300 rounded-3xl cursor-pointer">
+                                <label class="block text-sm font-medium text-gray-700">Course Colors</label>
+                                <div class="flex space-x-3 mt-2">
+                                    <!-- Main Color Circle -->
+                                    <div class="flex flex-col items-center space-y-1 color-circle">
+                                        <label class="text-xs text-gray-600 font-medium">Main</label>
+                                        <div class="relative w-12 h-12">
+                                            <div class="color-visual absolute inset-0"></div>
+                                            <input type="color" id="theme-color-main" value="#268ca7" class="setting-input absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        </div>
+                                    </div>
+
+                                    <!-- Secondary Color Circle -->
+                                    <div class="flex flex-col items-center space-y-1 color-circle">
+                                        <label class="text-xs text-gray-600 font-medium">Secondary</label>
+                                        <div class="relative w-12 h-12">
+                                            <div class="color-visual absolute inset-0"></div>
+                                            <input type="color" id="theme-color-secondary" value="#1e6a80" class="setting-input absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        </div>
+                                    </div>
+
+                                    <!-- Text Color Circle -->
+                                    <div class="flex flex-col items-center space-y-1 color-circle">
+                                        <label class="text-xs text-gray-600 font-medium">Text</label>
+                                        <div class="relative w-12 h-12">
+                                            <div class="color-visual absolute inset-0"></div>
+                                            <input type="color" id="theme-color-text" value="#333333" class="setting-input absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        </div>
+                                    </div>
+
+                                    <!-- Background Color Circle -->
+                                    <div class="flex flex-col items-center space-y-1 color-circle">
+                                        <label class="text-xs text-gray-600 font-medium">Background</label>
+                                        <div class="relative w-12 h-12">
+                                            <div class="color-visual absolute inset-0"></div>
+                                            <input type="color" id="theme-color-bg" value="#f7f8fa" class="setting-input absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden inputs to store theme type -->
+                                <input type="hidden" id="theme-type" value="wealth-course" class="setting-input">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <label for="text-alignment" class="block text-sm font-medium text-gray-700">Text Alignment</label>
+                                    <select id="text-alignment" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                        <option value="left" selected>Left</option>
+                                        <option value="justify">Justify</option>
+                                        <option value="center">Center</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="paragraph-spacing" class="block text-sm font-medium text-gray-700">Paragraph Spacing</label>
+                                    <select id="paragraph-spacing" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                        <option value="compact">Compact</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="relaxed">Relaxed</option>
+                                    </select>
+                                </div>
                             </div>
                             
                             <div>
@@ -431,10 +576,21 @@
                                     <option value="black">Black</option>
                                 </select>
                             </div>
-                             <div>
-                                <label for="zip-filename" class="block text-sm font-medium text-gray-700">.zip Filename</label>
-                                <input type="text" id="zip-filename" value="wealth-course-batch" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                            <div class="mt-2">
+                                <label for="include-page-numbers" class="inline-flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" id="include-page-numbers" class="setting-input rounded mr-2">
+                                    <span class="text-sm font-medium text-gray-700">Include Page Numbers</span>
+                                </label>
                             </div>
+                            <div class="mt-2">
+                                <label for="heading-style-preset" class="block text-sm font-medium text-gray-700">Heading Style Preset</label>
+                                <select id="heading-style-preset" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]">
+                                    <option value="clean" selected>Clean</option>
+                                    <option value="bold">Bold</option>
+                                    <option value="minimalist">Minimalist</option>
+                                </select>
+                            </div>
+                             
                             <div class="hidden">
                                 <label for="style-preset" class="block text-sm font-medium text-gray-700">Style Preset</label>
                                 <select id="style-preset" class="setting-input mt-1 block w-full border-gray-300 rounded-3xl shadow-sm focus:ring-[#268ca7] focus:border-[#268ca7]" disabled title="Style is set by pdf-lib logic">
@@ -601,8 +757,47 @@
                     <div class="space-y-4 p-4 border border-gray-200 rounded-3xl">
                         <h3 class="font-medium text-lg text-gray-600">Formatting</h3>
                         <div>
-                            <label for="modal-theme-color" class="block text-sm font-medium text-gray-700">Theme Color</label>
-                            <input type="color" id="modal-theme-color" class="mt-1 block w-full h-10 border-gray-300 rounded-3xl cursor-pointer">
+                            <label class="block text-sm font-medium text-gray-700">Course Type</label>
+                            <div class="flex space-x-3 mt-2">
+                                <!-- Main Color Circle -->
+                                <div class="flex flex-col items-center space-y-1">
+                                    <label class="text-xs text-gray-600 font-medium">Main</label>
+                                    <div class="relative">
+                                        <input type="color" id="modal-theme-color-main" value="#268ca7" class="setting-input w-12 h-12 rounded-full border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+                                            <div class="absolute inset-0 rounded-full border-2 border-gray-300 pointer-events-none"></div>
+                                        </div>
+                                    </div>
+
+                                <!-- Secondary Color Circle -->
+                                <div class="flex flex-col items-center space-y-1">
+                                    <label class="text-xs text-gray-600 font-medium">Secondary</label>
+                                    <div class="relative">
+                                        <input type="color" id="modal-theme-color-secondary" value="#1e6a80" class="setting-input w-12 h-12 rounded-full border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+                                            <div class="absolute inset-0 rounded-full border-2 border-gray-300 pointer-events-none"></div>
+                                        </div>
+                                    </div>
+
+                                <!-- Text Color Circle -->
+                                <div class="flex flex-col items-center space-y-1">
+                                    <label class="text-xs text-gray-600 font-medium">Text</label>
+                                    <div class="relative">
+                                        <input type="color" id="modal-theme-color-text" value="#333333" class="setting-input w-12 h-12 rounded-full border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+                                            <div class="absolute inset-0 rounded-full border-2 border-gray-300 pointer-events-none"></div>
+                                        </div>
+                                    </div>
+
+                                <!-- Background Color Circle -->
+                                <div class="flex flex-col items-center space-y-1">
+                                    <label class="text-xs text-gray-600 font-medium">Background</label>
+                                    <div class="relative">
+                                        <input type="color" id="modal-theme-color-bg" value="#f7f8fa" class="setting-input w-12 h-12 rounded-full border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow">
+                                            <div class="absolute inset-0 rounded-full border-2 border-gray-300 pointer-events-none"></div>
+                                        </div>
+                                    </div>
+                            </div>
+
+                            <!-- Hidden inputs to store theme type -->
+                            <input type="hidden" id="modal-theme-type" value="wealth-course" class="setting-input">
                         </div>
                         <div>
                             <label for="modal-font-family" class="block text-sm font-medium text-gray-700">Font Family</label>
@@ -968,6 +1163,7 @@
             init: function() {
                 this.cacheDOMElements();
                 this.loadSettings();
+                this.updateColorSwatches();
                 this.bindEvents();
                 this.updateUIState();
                 lucide.createIcons();
@@ -1027,6 +1223,10 @@
                 // Settings persistence
                 this.dom.settingInputs.on('change keyup', this.saveSettings.bind(this));
 
+                // Live update color swatches (ensure visible even if native input is white)
+                const colorSelectors = '#theme-color-main, #theme-color-secondary, #theme-color-text, #theme-color-bg';
+                $(document).on('input change', colorSelectors, () => this.updateColorSwatches());
+
                 // Drag and Drop
                 this.dom.dropZone.on('dragover', (e) => this.handleDragOver(e));
                 this.dom.dropZone.on('dragleave', (e) => this.handleDragLeave(e));
@@ -1048,6 +1248,14 @@
                 // Batch Processing
                 this.dom.generateBatch.on('click', this.processBatch.bind(this));
 
+                // Course Type preset switching (apply safe visual defaults only)
+                $('#course-type').on('change', () => {
+                    const type = $('#course-type').val();
+                    this.applyCourseTypePreset(type);
+                    this.updateColorSwatches();
+                    this.saveSettings();
+                });
+
                 // Modal Events
                 this.dom.fileList.on('click', '.edit-file-btn', (e) => this.openSettingsModal(e));
                 this.dom.closeModal.on('click', this.closeSettingsModal.bind(this));
@@ -1060,6 +1268,77 @@
 
                 // Mobile Menu
                 this.dom.mobileMenuButton.on('click', this.toggleMobileMenu.bind(this));
+            },
+
+            // Define safe presets for course types. These only adjust theme colors, font, and header weight.
+            getCourseTypePreset: function(type) {
+                const presets = {
+                    wealth: {
+                        themeColor: '#268ca7',
+                        themeColorSecondary: '#1e6a80',
+                        themeColorText: '#333333',
+                        themeColorBg: '#f7f8fa',
+                        fontFamily: 'geist',
+                        headerFontWeight: 'semibold',
+                        textAlignment: 'left',
+                        paragraphSpacing: 'normal',
+                        includePageNumbers: true,
+                        headingStylePreset: 'clean'
+                    },
+                    education: {
+                        themeColor: '#2563eb',
+                        themeColorSecondary: '#1e40af',
+                        themeColorText: '#1f2937',
+                        themeColorBg: '#f8fafc',
+                        fontFamily: 'lato',
+                        headerFontWeight: 'bold',
+                        textAlignment: 'justify',
+                        paragraphSpacing: 'normal',
+                        includePageNumbers: true,
+                        headingStylePreset: 'clean'
+                    },
+                    lecture: {
+                        themeColor: '#111827',
+                        themeColorSecondary: '#4b5563',
+                        themeColorText: '#111827',
+                        themeColorBg: '#ffffff',
+                        fontFamily: 'oswald',
+                        headerFontWeight: 'black',
+                        textAlignment: 'left',
+                        paragraphSpacing: 'compact',
+                        includePageNumbers: true,
+                        headingStylePreset: 'bold'
+                    },
+                    general: {
+                        themeColor: '#10b981',
+                        themeColorSecondary: '#047857',
+                        themeColorText: '#374151',
+                        themeColorBg: '#f9fafb',
+                        fontFamily: 'montserrat',
+                        headerFontWeight: 'medium',
+                        textAlignment: 'justify',
+                        paragraphSpacing: 'relaxed',
+                        includePageNumbers: true,
+                        headingStylePreset: 'minimalist'
+                    }
+                };
+                return presets[type] || presets['wealth'];
+            },
+
+            // Apply preset to UI inputs without touching titles/footers/filenames to avoid surprises
+            applyCourseTypePreset: function(type) {
+                const p = this.getCourseTypePreset(type);
+                if (!p) return;
+                $('#theme-color-main').val(p.themeColor);
+                $('#theme-color-secondary').val(p.themeColorSecondary);
+                $('#theme-color-text').val(p.themeColorText);
+                $('#theme-color-bg').val(p.themeColorBg);
+                $('#font-family').val(p.fontFamily);
+                $('#header-font-weight').val(p.headerFontWeight);
+                if (p.textAlignment) $('#text-alignment').val(p.textAlignment);
+                if (p.paragraphSpacing) $('#paragraph-spacing').val(p.paragraphSpacing);
+                if (typeof p.includePageNumbers === 'boolean') $('#include-page-numbers').prop('checked', p.includePageNumbers);
+                if (p.headingStylePreset) $('#heading-style-preset').val(p.headingStylePreset);
             },
 
             toggleMobileMenu: function() {
@@ -1082,7 +1361,16 @@
                     logoUrl: $('#logo-url').val(),
                     footerText: $('#footer-text').val(),
                     includeToc: $('#include-toc').is(':checked'), // NEW
-                    themeColor: $('#theme-color').val(),
+                    themeColor: $('#theme-color-main').val(), // Main color
+                    themeColorSecondary: $('#theme-color-secondary').val(), // Secondary color
+                    themeColorText: $('#theme-color-text').val(), // Text color
+                    themeColorBg: $('#theme-color-bg').val(), // Background color
+                    themeType: $('#theme-type').val(), // Theme type selector
+                    courseType: $('#course-type').val(),
+                    textAlignment: $('#text-alignment').val(),
+                    paragraphSpacing: $('#paragraph-spacing').val(),
+                    includePageNumbers: $('#include-page-numbers').is(':checked'),
+                    headingStylePreset: $('#heading-style-preset').val(),
                     fontFamily: $('#font-family').val(), // NEW: This is now the key, e.g., 'lato'
                     fontSize: $('#font-size').val(),
                     headerFontWeight: $('#header-font-weight').val(), // NEW: Header font weight
@@ -1104,11 +1392,46 @@
                 $('#logo-url').val(settings.logoUrl || '');
                 $('#footer-text').val(settings.footerText || '© 2025 Wealth Builders Inc.');
                 $('#include-toc').prop('checked', settings.includeToc || false); // NEW
-                $('#theme-color').val(settings.themeColor || '#268ca7');
+
+                // Apply 4-circle color system
+                $('#theme-color-main').val(settings.themeColor || '#268ca7');
+                $('#theme-color-secondary').val(settings.themeColorSecondary || '#1e6a80');
+                $('#theme-color-text').val(settings.themeColorText || '#333333');
+                $('#theme-color-bg').val(settings.themeColorBg || '#f7f8fa');
+                $('#theme-type').val(settings.themeType || 'wealth-course'); // Theme type selector
+                $('#course-type').val(settings.courseType || 'wealth');
+                $('#text-alignment').val(settings.textAlignment || 'left');
+                $('#paragraph-spacing').val(settings.paragraphSpacing || 'normal');
+                $('#include-page-numbers').prop('checked', settings.includePageNumbers !== false);
+                $('#heading-style-preset').val(settings.headingStylePreset || 'clean');
+
                 $('#font-family').val(settings.fontFamily || 'geist'); // NEW
                 $('#font-size').val(settings.fontSize || 'medium');
                 $('#header-font-weight').val(settings.headerFontWeight || 'semibold'); // NEW
                 $('#zip-filename').val(settings.zipFilename || 'wealth-course-batch');
+                this.updateColorSwatches();
+            },
+
+            // --- UI Helpers ---
+            updateColorSwatches: function() {
+                try {
+                    const ids = ['#theme-color-main', '#theme-color-secondary', '#theme-color-text', '#theme-color-bg'];
+                    ids.forEach((sel) => {
+                        const el = document.querySelector(sel);
+                        if (!el) return;
+                        const val = el.value || '#ffffff';
+                        // Update visible swatch
+                        const wrap = el.closest('.color-circle');
+                        if (wrap) {
+                            const visual = wrap.querySelector('.color-visual');
+                            if (visual) {
+                                visual.style.backgroundColor = val;
+                            }
+                        }
+                    });
+                } catch (e) {
+                    // no-op
+                }
             },
 
             loadSettings: function() {
@@ -1393,7 +1716,14 @@
                 $('#modal-logo-url').val(settings.logoUrl);
                 $('#modal-footer-text').val(settings.footerText);
                 $('#modal-include-toc').prop('checked', settings.includeToc); // NEW
-                $('#modal-theme-color').val(settings.themeColor);
+
+                // Apply 4-circle color system to modal
+                $('#modal-theme-color-main').val(settings.themeColor || '#268ca7');
+                $('#modal-theme-color-secondary').val(settings.themeColorSecondary || '#1e6a80');
+                $('#modal-theme-color-text').val(settings.themeColorText || '#333333');
+                $('#modal-theme-color-bg').val(settings.themeColorBg || '#f7f8fa');
+                $('#modal-theme-type').val(settings.themeType || 'wealth-course'); // Theme type selector
+
                 $('#modal-font-family').val(settings.fontFamily); // NEW
                 $('#modal-font-size').val(settings.fontSize);
                 $('#modal-header-font-weight').val(settings.headerFontWeight || 'semibold'); // NEW
@@ -1416,7 +1746,14 @@
                     logoUrl: $('#modal-logo-url').val(),
                     footerText: $('#modal-footer-text').val(),
                     includeToc: $('#modal-include-toc').is(':checked'), // NEW
-                    themeColor: $('#modal-theme-color').val(),
+
+                    // Apply 4-circle color system to overrides
+                    themeColor: $('#modal-theme-color-main').val(),
+                    themeColorSecondary: $('#modal-theme-color-secondary').val(),
+                    themeColorText: $('#modal-theme-color-text').val(),
+                    themeColorBg: $('#modal-theme-color-bg').val(),
+                    themeType: $('#modal-theme-type').val(), // Theme type selector
+
                     fontFamily: $('#modal-font-family').val(), // NEW
                     fontSize: $('#modal-font-size').val(),
                     headerFontWeight: $('#modal-header-font-weight').val(), // NEW
@@ -1449,74 +1786,232 @@
 
             drawText: function(text, options) {
                 const { page, font, size, color, y, lineHeight, maxWidth, align = 'center' } = options;
-                const { width: pageWidth } = page.getSize();
-                // Ensure text is a string
-                const lines = this.wrapText(String(text || ''), font, size, maxWidth);
-                
-                const effectiveLineHeight = lineHeight || size * 1.4;
-                let currentY = y; 
+                const { width: pageWidth, height: pageHeight } = page.getSize();
 
-                lines.forEach(line => {
+                // === COMPREHENSIVE INPUT VALIDATION ===
+                if (!page || !font || !size || y === undefined) {
+                    console.warn('drawText: Missing required parameters');
+                    return y;
+                }
+
+                // === TEXT PROCESSING OPTIMIZATION ===
+                let processedText = String(text || '');
+
+                // Handle special cases
+                if (processedText.trim() === '') {
+                    return y - (lineHeight || size * 1.4);
+                }
+
+                // Remove problematic characters that might cause rendering issues
+                processedText = processedText.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+                // === ADVANCED WIDTH CALCULATION ===
+                const leftMargin = 72;
+                const rightMargin = 72;
+                const usableWidth = pageWidth - leftMargin - rightMargin;
+                const effectiveMaxWidth = Math.min(maxWidth || usableWidth, usableWidth);
+
+                // Ensure minimum width for readability
+                const minTextWidth = Math.max(effectiveMaxWidth, 100);
+
+                // === SMART TEXT WRAPPING ===
+                const lines = this.wrapText(processedText, font, size, minTextWidth);
+
+                if (!lines || lines.length === 0) {
+                    return y;
+                }
+
+                // === DYNAMIC LINE HEIGHT CALCULATION ===
+                let effectiveLineHeight;
+                if (lineHeight && typeof lineHeight === 'number' && lineHeight > 0) {
+                    effectiveLineHeight = lineHeight;
+                } else if (size && typeof size === 'number' && size > 0) {
+                    effectiveLineHeight = size * 1.4;
+                } else {
+                    effectiveLineHeight = 12; // fallback
+                }
+
+                // === ADVANCED POSITIONING LOGIC ===
+                let currentY = y;
+                const bottomMargin = 72;
+                const footerSpace = 50;
+
+                // Early exit if there's clearly no vertical space (e.g., footer area)
+                if ((currentY - bottomMargin - footerSpace) < effectiveLineHeight) {
+                    return currentY;
+                }
+
+                lines.forEach((line, lineIndex) => {
+                    if (!line || line.trim() === '') {
+                        currentY -= effectiveLineHeight * 0.5;
+                        return;
+                    }
+
                     const textWidth = font.widthOfTextAtSize(line, size);
                     let x;
+
+                    // === SOPHISTICATED ALIGNMENT LOGIC ===
                     if (align === 'center') {
-                         x = (pageWidth - textWidth) / 2;
+                        x = (pageWidth - textWidth) / 2;
+                        // Ensure centered text doesn't exceed boundaries
+                        if (x < leftMargin) x = leftMargin;
+                        if (x + textWidth > pageWidth - rightMargin) {
+                            x = leftMargin + (usableWidth - textWidth) / 2;
+                        }
                     } else if (align === 'right') {
-                        x = pageWidth - textWidth - (options.margin || 0);
+                        x = pageWidth - rightMargin - textWidth;
+                        // Ensure right-aligned text doesn't exceed left margin
+                        if (x < leftMargin) x = leftMargin;
+                    } else if (align === 'justify') {
+                        x = leftMargin;
+                        // Note: Full justification would require character-level positioning
                     } else {
-                        // left align
-                        x = options.margin || 0;
+                        // left align (default)
+                        x = Math.max(options.margin || leftMargin, leftMargin);
                     }
-                    
-                    page.drawText(line, {
-                        x: x, y: currentY, font, size, color, lineHeight: effectiveLineHeight
-                    });
+
+                    // === BOUNDARY VALIDATION AND CORRECTION ===
+                    const maxX = pageWidth - rightMargin - textWidth;
+                    const actualX = Math.max(leftMargin, Math.min(x, maxX));
+
+                    // === SPACE VALIDATION ===
+                    const requiredSpace = effectiveLineHeight;
+                    const availableSpace = currentY - bottomMargin - footerSpace;
+
+                    if (availableSpace < requiredSpace) {
+                        console.warn('Text would exceed page boundary');
+                        return currentY;
+                    }
+
+                    // === OPTIMIZED TEXT RENDERING ===
+                    try {
+                        if (align === 'justify' && lineIndex < lines.length - 1) {
+                            const words = line.split(' ');
+                            if (words.length > 1) {
+                                const baseWidth = font.widthOfTextAtSize(line, size);
+                                const spaceCount = words.length - 1;
+                                const extra = Math.max(0, usableWidth - baseWidth);
+                                const extraPerSpace = extra / spaceCount;
+                                const baseSpace = font.widthOfTextAtSize(' ', size);
+                                let cursorX = leftMargin;
+                                for (let w = 0; w < words.length; w++) {
+                                    const word = words[w];
+                                    if (word) {
+                                        page.drawText(word, { x: cursorX, y: currentY, font, size, color: color || undefined });
+                                        cursorX += font.widthOfTextAtSize(word, size);
+                                    }
+                                    if (w < words.length - 1) {
+                                        cursorX += baseSpace + extraPerSpace;
+                                    }
+                                }
+                            } else {
+                                page.drawText(line, { x: actualX, y: currentY, font, size, color: color || undefined, lineHeight: effectiveLineHeight });
+                            }
+                        } else {
+                            page.drawText(line, {
+                                x: actualX,
+                                y: currentY,
+                                font: font,
+                                size: size,
+                                color: color || undefined,
+                                lineHeight: effectiveLineHeight
+                            });
+                        }
+                    } catch (renderError) {
+                        console.error('Text rendering error:', renderError);
+                        // Try fallback rendering
+                        try {
+                            page.drawText(line.replace(/[^\x20-\x7E]/g, '?'), {
+                                x: actualX,
+                                y: currentY,
+                                font: font,
+                                size: size,
+                                // default color omitted
+                                lineHeight: effectiveLineHeight
+                            });
+                        } catch (fallbackError) {
+                            console.error('Fallback rendering failed:', fallbackError);
+                        }
+                    }
+
                     currentY -= effectiveLineHeight;
                 });
-                return currentY; // Return the new Y position
+
+                return currentY;
             },
 
             // NEW: Draw text with inline formatting (bold, italic, etc.)
             drawStyledText: function(text, options) {
                 const { page, font, boldFont, italicFont, size, color, y, lineHeight, maxWidth, align = 'left' } = options;
                 const { width: pageWidth } = page.getSize();
-                
-                // Parse inline markdown
+
+                // Ensure we have valid maxWidth and constrain to page boundaries
+                const effectiveMaxWidth = Math.min(maxWidth || pageWidth - 144, pageWidth - 144); // 144 = 72px margin on each side
+
+                // === ADVANCED MARKDOWN PARSING ===
                 const parseInlineMarkdown = (text) => {
-                    if (!text) return '';
-                    // Parse bold text **text** -> <b>text</b>
-                    let parsed = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                    // Parse italic text *text* -> <i>text</i>
-                    parsed = parsed.replace(/\*(.*?)\*/g, '<i>$1</i>');
-                    // Parse inline code `text` -> <code>text</code>
-                    parsed = parsed.replace(/`(.*?)`/g, '<code>$1</code>');
+                    if (!text || typeof text !== 'string') return '';
+
+                    let parsed = text;
+
+                    // Handle bold text with proper escaping
+                    if (parsed.includes('**')) {
+                        parsed = parsed.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+                    }
+
+                    // Handle italic text (avoid double processing)
+                    if (parsed.includes('*')) {
+                        parsed = parsed.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<i>$1</i>');
+                    }
+
+                    // Handle inline code
+                    if (parsed.includes('`')) {
+                        parsed = parsed.replace(/`(.+?)`/g, '<code>$1</code>');
+                    }
+
+                    // Clean up malformed tags
+                    parsed = parsed.replace(/<[^>]*>/g, '');
+
                     return parsed;
                 };
                 
                 const styledText = parseInlineMarkdown(text);
-                const lines = this.wrapText(styledText, font, size, maxWidth);
-                
+                const lines = this.wrapText(styledText, font, size, effectiveMaxWidth);
+
                 const effectiveLineHeight = lineHeight || size * 1.4;
                 let currentY = y;
                 
                 lines.forEach(line => {
                     // Split line into styled segments
                     const segments = this.parseStyledSegments(line, font, boldFont, italicFont, size, color);
-                    
-                    let x = options.margin || 0;
+
+                    let x = options.margin || 72; // Default to left margin
                     if (align === 'center') {
                         const totalWidth = segments.reduce((sum, seg) => sum + seg.width, 0);
                         x = (pageWidth - totalWidth) / 2;
                     } else if (align === 'right') {
                         const totalWidth = segments.reduce((sum, seg) => sum + seg.width, 0);
-                        x = pageWidth - totalWidth - (options.margin || 0);
+                        x = Math.min(pageWidth - 72 - totalWidth, pageWidth - 72 - effectiveMaxWidth);
+                    } else {
+                        // left align - ensure we don't exceed left margin
+                        x = Math.max(options.margin || 72, 72);
                     }
-                    
+
+                    // Ensure we don't exceed page boundaries
+                    let currentX = Math.max(72, Math.min(x, pageWidth - 72));
+
                     segments.forEach(segment => {
+                        // Check if segment would exceed right boundary
+                        if (currentX + segment.width > pageWidth - 72) {
+                            // Move to next line if segment doesn't fit
+                            currentY -= effectiveLineHeight;
+                            currentX = 72;
+                        }
+
                         page.drawText(segment.text, {
-                            x: x, y: currentY, font: segment.font, size: segment.size, color: segment.color
+                            x: currentX, y: currentY, font: segment.font, size: segment.size, color: segment.color
                         });
-                        x += segment.width;
+                        currentX += segment.width;
                     });
                     
                     currentY -= effectiveLineHeight;
@@ -1524,114 +2019,375 @@
                 return currentY;
             },
 
-            // NEW: Parse text into styled segments
+            // === ENHANCED: Parse text into styled segments ===
             parseStyledSegments: function(text, regularFont, boldFont, italicFont, size, color) {
-                const segments = [];
-                
-                // If no styled elements, return as single segment
-                if (!text.includes('<b>') && !text.includes('<i>') && !text.includes('<code>')) {
+                // === COMPREHENSIVE INPUT VALIDATION ===
+                if (!text || typeof text !== 'string') {
                     return [{
-                        text: text,
+                        text: String(text || ''),
                         font: regularFont,
                         size: size,
                         color: color,
-                        width: regularFont.widthOfTextAtSize(text, size)
+                        width: regularFont ? regularFont.widthOfTextAtSize(String(text || ''), size) : 100
                     }];
                 }
-                
-                // Simple regex to find styled segments
+
+                if (!regularFont) {
+                    console.warn('parseStyledSegments: Missing regular font');
+                    regularFont = { widthOfTextAtSize: () => 100 };
+                }
+
+                const segments = [];
+
+                // === OPTIMIZED EARLY RETURN ===
+                const hasBold = text.includes('<b>');
+                const hasItalic = text.includes('<i>');
+                const hasCode = text.includes('<code>');
+
+                if (!hasBold && !hasItalic && !hasCode) {
+                    // No styling needed, return single segment
+                    const cleanText = text.replace(/<[^>]*>/g, '');
+                    return [{
+                        text: cleanText,
+                        font: regularFont,
+                        size: size,
+                        color: color,
+                        width: this.calculateTextWidth(cleanText, regularFont, size)
+                    }];
+                }
+
+                // === ADVANCED PARSING LOGIC ===
+                const segmentPatterns = [
+                    { tag: 'b', font: boldFont, index: 1 },
+                    { tag: 'i', font: italicFont, index: 2 },
+                    { tag: 'code', font: regularFont, index: 3, sizeMultiplier: 0.9 }
+                ];
+
+                // Enhanced regex for better matching
                 const regex = /(<b>(.*?)<\/b>|<i>(.*?)<\/i>|<code>(.*?)<\/code>)/g;
                 let lastIndex = 0;
                 let match;
                 
                 while ((match = regex.exec(text)) !== null) {
-                    // Add any text before the match
+                    // === PROCESS TEXT BEFORE STYLED SEGMENT ===
                     if (match.index > lastIndex) {
                         const beforeText = text.substring(lastIndex, match.index);
-                        if (beforeText) {
+                        const cleanBeforeText = beforeText.replace(/<[^>]*>/g, '');
+
+                        if (cleanBeforeText && cleanBeforeText.length > 0) {
                             segments.push({
-                                text: beforeText,
+                                text: cleanBeforeText,
                                 font: regularFont,
                                 size: size,
                                 color: color,
-                                width: regularFont.widthOfTextAtSize(beforeText, size)
+                                width: this.calculateTextWidth(cleanBeforeText, regularFont, size)
                             });
                         }
                     }
-                    
-                    // Add the styled segment
-                    if (match[1].startsWith('<b>')) {
-                        segments.push({
-                            text: match[2],
-                            font: boldFont,
-                            size: size,
-                            color: color,
-                            width: boldFont.widthOfTextAtSize(match[2], size)
-                        });
-                    } else if (match[1].startsWith('<i>')) {
-                        segments.push({
-                            text: match[3],
-                            font: italicFont,
-                            size: size,
-                            color: color,
-                            width: italicFont.widthOfTextAtSize(match[3], size)
-                        });
-                    } else if (match[1].startsWith('<code>')) {
-                        segments.push({
-                            text: match[4],
-                            font: regularFont, // Use regular font for code
-                            size: size * 0.9, // Slightly smaller
-                            color: color,
-                            width: regularFont.widthOfTextAtSize(match[4], size * 0.9)
-                        });
+
+                    // === PROCESS STYLED SEGMENT ===
+                    let styledSegment = null;
+                    let segmentFont = regularFont;
+                    let segmentSize = size;
+                    let segmentText = '';
+                    let segmentWidth = 0;
+
+                    // Determine which type of segment we have
+                    if (match[1] && match[1].startsWith('<b>')) {
+                        segmentFont = boldFont || regularFont;
+                        segmentText = match[2] || '';
+                        segmentSize = size;
+                    } else if (match[1] && match[1].startsWith('<i>')) {
+                        segmentFont = italicFont || regularFont;
+                        segmentText = match[3] || '';
+                        segmentSize = size;
+                    } else if (match[1] && match[1].startsWith('<code>')) {
+                        segmentFont = regularFont; // Code uses regular font
+                        segmentText = match[4] || '';
+                        segmentSize = size * 0.9; // Code is slightly smaller
+                    }
+
+                    // === SEGMENT VALIDATION AND CREATION ===
+                    if (segmentText && segmentText.length > 0) {
+                        const cleanSegmentText = segmentText.replace(/<[^>]*>/g, '');
+
+                        if (cleanSegmentText.length > 0) {
+                            segmentWidth = this.calculateTextWidth(cleanSegmentText, segmentFont, segmentSize);
+
+                            styledSegment = {
+                                text: cleanSegmentText,
+                                font: segmentFont,
+                                size: segmentSize,
+                                color: color,
+                                width: segmentWidth
+                            };
+
+                            // Additional validation for code segments
+                            if (match[1] && match[1].startsWith('<code>')) {
+                                styledSegment.isCode = true;
+                                styledSegment.backgroundColor = { r: 0.95, g: 0.95, b: 0.95 };
+                            }
+                        }
+                    }
+
+                    // === ADD VALIDATED SEGMENT ===
+                    if (styledSegment) {
+                        segments.push(styledSegment);
                     }
                     
                     lastIndex = regex.lastIndex;
                 }
-                
-                // Add any remaining text
+
+                // === PROCESS REMAINING TEXT ===
                 if (lastIndex < text.length) {
                     const remainingText = text.substring(lastIndex);
-                    if (remainingText) {
+                    const cleanRemainingText = remainingText.replace(/<[^>]*>/g, '');
+
+                    if (cleanRemainingText && cleanRemainingText.length > 0) {
                         segments.push({
-                            text: remainingText,
+                            text: cleanRemainingText,
                             font: regularFont,
                             size: size,
                             color: color,
-                            width: regularFont.widthOfTextAtSize(remainingText, size)
+                            width: this.calculateTextWidth(cleanRemainingText, regularFont, size)
                         });
                     }
                 }
-                
-                return segments;
+
+                // === POST-PROCESSING VALIDATION ===
+                const validSegments = segments.filter(segment => {
+                    return segment &&
+                           segment.text &&
+                           typeof segment.text === 'string' &&
+                           segment.font &&
+                           segment.width &&
+                           typeof segment.width === 'number' &&
+                           segment.width >= 0;
+                });
+
+                return validSegments.length > 0 ? validSegments : [{
+                    text: text.replace(/<[^>]*>/g, ''),
+                    font: regularFont,
+                    size: size,
+                    color: color,
+                    width: this.calculateTextWidth(text.replace(/<[^>]*>/g, ''), regularFont, size)
+                }];
+            },
+
+            // === HELPER: CALCULATE TEXT WIDTH ===
+            calculateTextWidth: function(text, font, size) {
+                // === COMPREHENSIVE VALIDATION ===
+                if (!text || typeof text !== 'string') return 0;
+                if (!font || !font.widthOfTextAtSize) return text.length * (size || 12) * 0.6; // rough estimate
+                if (!size || size <= 0) return 0;
+
+                // === TEXT CLEANING ===
+                const cleanText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+                if (cleanText.length === 0) return 0;
+
+                // === WIDTH CALCULATION WITH FALLBACKS ===
+                try {
+                    const width = font.widthOfTextAtSize(cleanText, size);
+                    if (typeof width === 'number' && width >= 0) {
+                        return width;
+                    }
+                } catch (error) {
+                    console.warn('Font width calculation failed:', error);
+                }
+
+                // === FALLBACK CALCULATION ===
+                const avgCharWidth = size * 0.6; // rough average
+                return cleanText.length * avgCharWidth;
             },
 
             wrapText: function(text, font, size, maxWidth) {
-                if (!text) return [''];
-                if (!maxWidth) return text.split('\n');
-                
-                // Handle potential non-string inputs
-                const textString = String(text);
-                
-                const words = textString.replace(/\n/g, ' \n ').split(' ');
-                let line = '';
-                const lines = [];
-                for (const word of words) {
-                    if (word === '\n') {
-                        lines.push(line);
-                        line = '';
-                        continue;
-                    }
-                    const testLine = line + (line ? ' ' : '') + word;
-                    const width = font.widthOfTextAtSize(testLine, size);
-                    if (width > maxWidth) {
-                        lines.push(line);
-                        line = word;
+                // === COMPREHENSIVE INPUT VALIDATION ===
+                if (!text && text !== 0) return [''];
+                if (!font) {
+                    console.warn('wrapText: No font provided');
+                    return [''];
+                }
+                if (!size || size <= 0) {
+                    console.warn('wrapText: Invalid font size');
+                    return [''];
+                }
+                if (!maxWidth || maxWidth <= 0) {
+                    // If no maxWidth, split on newlines only
+                    if (typeof text === 'string') {
+                        return text.split('\n').filter(line => line !== null);
                     } else {
-                        line = testLine;
+                        return [String(text)];
                     }
                 }
-                lines.push(line);
+
+                // === ADVANCED TEXT PROCESSING ===
+                let textString = String(text);
+
+                // Handle null/undefined edge cases
+                if (textString === 'null' || textString === 'undefined') {
+                    textString = '';
+                }
+
+                // Remove control characters that might cause issues
+                textString = textString.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+                // Normalize whitespace
+                textString = textString.replace(/\s+/g, ' ').trim();
+
+                // Handle empty string after processing
+                if (textString.length === 0) {
+                    return [''];
+                }
+
+                // === INTELLIGENT WORD BREAKING LOGIC ===
+                const words = [];
+                let currentWord = '';
+
+                for (let i = 0; i < textString.length; i++) {
+                    const char = textString[i];
+
+                    if (char === ' ') {
+                        if (currentWord.length > 0) {
+                            words.push(currentWord);
+                            currentWord = '';
+                        }
+                        words.push(' '); // Preserve spaces as separate tokens
+                    } else if (char === '\n') {
+                        if (currentWord.length > 0) {
+                            words.push(currentWord);
+                            currentWord = '';
+                        }
+                        words.push('\n'); // Preserve newlines
+                    } else if (char === '\t') {
+                        if (currentWord.length > 0) {
+                            words.push(currentWord);
+                            currentWord = '';
+                        }
+                        words.push('    '); // Convert tabs to spaces
+                    } else {
+                        currentWord += char;
+                    }
+                }
+
+                if (currentWord.length > 0) {
+                    words.push(currentWord);
+                }
+
+                // === SOPHISTICATED LINE WRAPPING ===
+                const lines = [];
+                let currentLine = '';
+                let currentLineWidth = 0;
+
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+
+                    // Handle newlines immediately
+                    if (word === '\n') {
+                        if (currentLine.trim().length > 0) {
+                            lines.push(currentLine.trim());
+                        }
+                        currentLine = '';
+                        currentLineWidth = 0;
+                        continue;
+                    }
+
+                    // Handle spaces
+                    if (word === ' ') {
+                        if (currentLine.length > 0) {
+                            const testLine = currentLine + word;
+                            const testWidth = font.widthOfTextAtSize(testLine, size);
+
+                            if (testWidth <= maxWidth) {
+                                currentLine = testLine;
+                                currentLineWidth = testWidth;
+                            } else {
+                                // Space would exceed width, move to next line
+                                lines.push(currentLine.trim());
+                                currentLine = '';
+                                currentLineWidth = 0;
+                            }
+                        }
+                        continue;
+                    }
+
+                    // Handle regular words
+                    const testLine = currentLine + (currentLine.length > 0 && !currentLine.endsWith(' ') ? ' ' : '') + word;
+                    const testWidth = font.widthOfTextAtSize(testLine, size);
+
+                    if (testWidth <= maxWidth) {
+                        currentLine = testLine;
+                        currentLineWidth = testWidth;
+                    } else {
+                        // Word doesn't fit, try to break the word
+                        if (currentLine.trim().length > 0) {
+                            lines.push(currentLine.trim());
+                            currentLine = '';
+                            currentLineWidth = 0;
+                        }
+
+                        // Try to fit the word by breaking it
+                        const brokenWord = this.breakLongWord(word, font, size, maxWidth);
+                        if (brokenWord.length > 1) {
+                            // Word was broken, add first part
+                            currentLine = brokenWord[0];
+                            currentLineWidth = font.widthOfTextAtSize(brokenWord[0], size);
+
+                            // Add remaining parts as separate lines if needed
+                            for (let j = 1; j < brokenWord.length; j++) {
+                                lines.push(currentLine.trim());
+                                currentLine = brokenWord[j];
+                                currentLineWidth = font.widthOfTextAtSize(brokenWord[j], size);
+                            }
+                        } else {
+                            // Word couldn't be broken, add it anyway (might overflow)
+                            currentLine = word;
+                            currentLineWidth = font.widthOfTextAtSize(word, size);
+                        }
+                    }
+                }
+
+                // Add final line if it has content
+                if (currentLine.trim().length > 0) {
+                    lines.push(currentLine.trim());
+                }
+
+                // === POST-PROCESSING VALIDATION ===
+                const validLines = lines.filter(line =>
+                    line !== null &&
+                    line !== undefined &&
+                    typeof line === 'string'
+                );
+
+                return validLines.length > 0 ? validLines : [''];
+            },
+
+            // === HELPER: BREAK LONG WORDS ===
+            breakLongWord: function(word, font, size, maxWidth) {
+                const lines = [];
+                let currentLine = '';
+
+                for (let i = 0; i < word.length; i++) {
+                    const testLine = currentLine + word[i];
+                    const testWidth = font.widthOfTextAtSize(testLine, size);
+
+                    if (testWidth <= maxWidth) {
+                        currentLine = testLine;
+                    } else {
+                        if (currentLine.length > 0) {
+                            lines.push(currentLine);
+                            currentLine = word[i];
+                        } else {
+                            // Single character doesn't fit, add it anyway
+                            lines.push(word[i]);
+                        }
+                    }
+                }
+
+                if (currentLine.length > 0) {
+                    lines.push(currentLine);
+                }
+
                 return lines;
             },
             
@@ -1651,24 +2407,53 @@
                 }
             },
             
-            fetchAndEmbedImage: async function(pdfDoc, url) {
+            fetchAndEmbedImage: async function(pdfDoc, url, targetWidthPts) {
                 if (!url) return null;
                 try {
                     const res = await fetch(url); 
                     if (!res.ok) {
                          throw new Error(`Image fetch failed with status ${res.status}: ${url}`);
                     }
-                    const imageBytes = await res.arrayBuffer();
-                    
+                    const blob = await res.blob();
+
+                    // If we have a target width (in points), cap the pixel width to ~300 DPI for print
+                    if (targetWidthPts && typeof targetWidthPts === 'number' && targetWidthPts > 0 && typeof window !== 'undefined') {
+                        const img = await new Promise((resolve, reject) => {
+                            const image = new Image();
+                            image.onload = () => resolve(image);
+                            image.onerror = reject;
+                            image.src = URL.createObjectURL(blob);
+                        });
+
+                        const targetPx = Math.floor((targetWidthPts * 300) / 72); // 300 DPI
+                        const scale = Math.min(1, targetPx / img.width);
+
+                        if (scale < 1) {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.max(1, Math.floor(img.width * scale));
+                            canvas.height = Math.max(1, Math.floor(img.height * scale));
+                            const ctx = canvas.getContext('2d');
+                            ctx.imageSmoothingQuality = 'high';
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const optimizedBlob = await new Promise(resolve => canvas.toBlob(resolve, blob.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.92));
+                            const optimizedBytes = optimizedBlob ? await optimizedBlob.arrayBuffer() : await blob.arrayBuffer();
+                            const uint8opt = new Uint8Array(optimizedBytes);
+                            if (uint8opt[0] === 0xFF && uint8opt[1] === 0xD8 && uint8opt[2] === 0xFF) {
+                                return await pdfDoc.embedJpg(optimizedBytes);
+                            }
+                            return await pdfDoc.embedPng(optimizedBytes);
+                        }
+                    }
+
+                    const imageBytes = await blob.arrayBuffer();
                     const uint8 = new Uint8Array(imageBytes);
                     if (uint8[0] === 0xFF && uint8[1] === 0xD8 && uint8[2] === 0xFF) {
                         return await pdfDoc.embedJpg(imageBytes);
                     } else if (uint8[0] === 0x89 && uint8[1] === 0x50 && uint8[2] === 0x4E && uint8[3] === 0x47) {
                          return await pdfDoc.embedPng(imageBytes);
-                    } else {
-                        console.warn(`Unknown image type for ${url}, attempting to embed as PNG.`);
-                        return await pdfDoc.embedPng(imageBytes);
                     }
+                    console.warn(`Unknown image type for ${url}, attempting to embed as PNG.`);
+                    return await pdfDoc.embedPng(imageBytes);
                 } catch (err) {
                      console.error(`Failed to fetch or embed image: ${url}`, err);
                      return null;
@@ -1726,6 +2511,269 @@
             },
 
             /**
+             * === NEW: DRAW TABLE ===
+             * Draws a table with proper formatting and borders
+             */
+            // === ENHANCED: Draw table with comprehensive formatting ===
+            drawTable: function(tableData, options) {
+                const { page, font, size, color, x, y, width, titleColor } = options;
+                const { rgb } = PDFLib;
+
+                // === COMPREHENSIVE INPUT VALIDATION ===
+                if (!page) {
+                    console.warn('drawTable: Missing page parameter');
+                    return y;
+                }
+
+                if (!tableData || !tableData.rows || tableData.rows.length === 0) {
+                    return y;
+                }
+
+                const { width: pageWidth, height: pageHeight } = page.getSize();
+
+                // === ADVANCED BOUNDARY CALCULATION ===
+                const leftMargin = 72;
+                const rightMargin = 72;
+                const topMargin = 72;
+                const bottomMargin = 72;
+                const usableWidth = pageWidth - leftMargin - rightMargin;
+                const usableHeight = pageHeight - topMargin - bottomMargin;
+
+                // === INTELLIGENT POSITIONING ===
+                const effectiveWidth = Math.min(width || usableWidth, usableWidth);
+                const effectiveX = Math.max(x || leftMargin, leftMargin);
+                const effectiveY = Math.max(y || pageHeight - topMargin, topMargin);
+
+                // === TABLE STYLING CONSTANTS ===
+                const cellPadding = 8;
+                const borderWidth = 1;
+                const minCellWidth = 50;
+                const maxCellWidth = effectiveWidth * 0.6;
+
+                // === DYNAMIC COLOR CALCULATION ===
+                let headerColor, textColor, borderColor, headerBgColor;
+
+                // Use theme color system with fallbacks
+                if (titleColor && typeof titleColor === 'object' && titleColor.r !== undefined) {
+                    headerColor = titleColor;
+                } else {
+                    headerColor = hexToRgb(themeColorHex);
+                }
+
+                if (color && typeof color === 'object' && color.r !== undefined) {
+                    textColor = color;
+                } else {
+                    textColor = hexToRgb(themeColorTextHex);
+                }
+
+                // Use secondary color for borders and backgrounds
+                borderColor = hexToRgb(themeColorSecondaryHex);
+                headerBgColor = hexToRgb(themeColorBgHex);
+
+                // === SOPHISTICATED COLUMN WIDTH CALCULATION ===
+                const colCount = Math.max(...tableData.rows.map(row => {
+                    if (row && Array.isArray(row)) {
+                        return row.length;
+                    }
+                    return 0;
+                }));
+
+                if (colCount <= 0) {
+                    return effectiveY;
+                }
+
+                // Initialize column widths with intelligent distribution
+                const colWidths = new Array(colCount).fill(effectiveWidth / colCount);
+
+                // === ADVANCED CONTENT ANALYSIS ===
+                tableData.rows.forEach((row, rowIndex) => {
+                    if (!row || !Array.isArray(row)) return;
+
+                    row.forEach((cell, colIndex) => {
+                        if (!cell || !cell.text) return;
+
+                        const cellText = String(cell.text).trim();
+                        if (cellText.length === 0) return;
+
+                        // Calculate text width with validation
+                        let textWidth;
+                        try {
+                            textWidth = font.widthOfTextAtSize(cellText, size);
+                        } catch (error) {
+                            console.warn('Text width calculation failed:', error);
+                            textWidth = cellText.length * size * 0.6; // fallback
+                        }
+
+                        // Apply intelligent column width adjustment
+                        if (textWidth > 0) {
+                            const requiredWidth = textWidth + (cellPadding * 2) + borderWidth;
+                            const currentWidth = colWidths[colIndex] || 0;
+
+                            if (requiredWidth > currentWidth) {
+                                // Increase column width if needed
+                                const newWidth = Math.min(requiredWidth, maxCellWidth);
+                                if (newWidth > currentWidth) {
+                                    colWidths[colIndex] = newWidth;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // === COLUMN WIDTH NORMALIZATION ===
+                const totalCalculatedWidth = colWidths.reduce((sum, width) => sum + (width || 0), 0);
+
+                if (totalCalculatedWidth > effectiveWidth) {
+                    const scale = effectiveWidth / totalCalculatedWidth;
+                    colWidths.forEach((width, index) => {
+                        if (width && width > 0) {
+                            colWidths[index] = width * scale;
+                        }
+                    });
+                }
+
+                // Ensure minimum column widths
+                colWidths.forEach((width, index) => {
+                    if (width < minCellWidth) {
+                        colWidths[index] = minCellWidth;
+                    }
+                });
+
+                // === ADVANCED TABLE RENDERING ===
+                let currentY = effectiveY;
+                let isFirstRow = true;
+                const minRowHeight = size + (cellPadding * 2) + borderWidth;
+
+                tableData.rows.forEach((row, rowIndex) => {
+                    if (!row || !Array.isArray(row)) return;
+
+                    // === ROW HEIGHT CALCULATION ===
+                    let maxRowHeight = minRowHeight;
+
+                    row.forEach((cell, colIndex) => {
+                        if (!cell || !cell.text) return;
+
+                        const cellText = String(cell.text).trim();
+                        if (cellText.length === 0) return;
+
+                        const availableWidth = (colWidths[colIndex] || minCellWidth) - (cellPadding * 2) - borderWidth;
+
+                        // Calculate cell height with error handling
+                        let cellHeight;
+                        try {
+                            const lines = this.wrapText(cellText, font, size, Math.max(availableWidth, 20));
+                            cellHeight = (lines.length * (size * 1.2)) + (cellPadding * 2) + borderWidth;
+                        } catch (error) {
+                            console.warn('Cell height calculation failed:', error);
+                            cellHeight = minRowHeight;
+                        }
+
+                        maxRowHeight = Math.max(maxRowHeight, cellHeight);
+                    });
+
+                    // === BOUNDARY VALIDATION ===
+                    const tableHeight = tableData.rows.length * maxRowHeight;
+                    const wouldExceedBottom = currentY - tableHeight < bottomMargin;
+
+                    if (wouldExceedBottom) {
+                        console.warn('Table would exceed page boundaries');
+                        return currentY;
+                    }
+
+                    // === HEADER BACKGROUND RENDERING ===
+                    if (isFirstRow) {
+                        try {
+                            page.drawRectangle({
+                                x: effectiveX,
+                                y: currentY - maxRowHeight,
+                                width: effectiveWidth,
+                                height: maxRowHeight,
+                                color: headerBgColor,
+                            });
+                        } catch (error) {
+                            console.error('Header background rendering failed:', error);
+                        }
+                    }
+
+                    // === CELL RENDERING LOOP ===
+                    let currentX = effectiveX;
+
+                    row.forEach((cell, colIndex) => {
+                        const cellWidth = colWidths[colIndex] || minCellWidth;
+
+                        // === CELL BOUNDARY VALIDATION ===
+                        const cellRightEdge = currentX + cellWidth;
+                        const wouldExceedRight = cellRightEdge > pageWidth - rightMargin;
+
+                        if (wouldExceedRight) {
+                            console.warn(`Cell ${colIndex} would exceed right boundary`);
+                            return;
+                        }
+
+                        // === CELL BORDER RENDERING ===
+                        try {
+                            page.drawRectangle({
+                                x: currentX,
+                                y: currentY - maxRowHeight,
+                                width: cellWidth,
+                                height: maxRowHeight,
+                                borderColor: borderColor,
+                                borderWidth: borderWidth,
+                            });
+                        } catch (error) {
+                            console.error('Cell border rendering failed:', error);
+                        }
+
+                        // === CELL TEXT RENDERING ===
+                        if (cell && cell.text && String(cell.text).trim().length > 0) {
+                            const cellText = String(cell.text).trim();
+                            const textFont = isFirstRow && cell.style && cell.style.bold ?
+                                (boldFont || font) : font;
+                            const textSize = isFirstRow ? size : size;
+                            const cellTextColor = isFirstRow ? headerColor : textColor;
+
+                            try {
+                                this.drawText(cellText, {
+                                    page,
+                                    font: textFont,
+                                    size: textSize,
+                                    color: cellTextColor,
+                                    y: currentY - cellPadding - borderWidth,
+                                    maxWidth: Math.max(cellWidth - (cellPadding * 2) - (borderWidth * 2), 10),
+                                    align: 'left',
+                                    margin: currentX + cellPadding + borderWidth,
+                                    lineHeight: size * 1.2
+                                });
+                            } catch (error) {
+                                console.error('Cell text rendering failed:', error);
+
+                                // === FALLBACK CELL TEXT RENDERING ===
+                                try {
+                                    const fallbackText = cellText.replace(/[^\x20-\x7E]/g, '?');
+                                    page.drawText(fallbackText, {
+                                        x: currentX + cellPadding + borderWidth,
+                                        y: currentY - cellPadding - borderWidth,
+                                        font: font,
+                                        size: textSize,
+                                        color: cellTextColor
+                                    });
+                                } catch (fallbackError) {
+                                    console.error('Fallback cell text rendering failed:', fallbackError);
+                                }
+                            }
+                        }
+
+                        currentX += cellWidth;
+                    });
+
+                    currentY -= maxRowHeight;
+                    isFirstRow = false;
+                });
+
+                return currentY;
+            },
+
+            /**
              * === UPDATED: RENDER MD TO PDF ===
              * Now includes an 'options' object with 'isToc' flag.
              */
@@ -1734,14 +2782,40 @@
                 
                 const { PDFDocument, rgb, PageSizes } = PDFLib;
                 const { regular, light, italic } = fonts;
+
+                // Alignment and spacing settings
+                const paragraphAlign = (finalSettings.textAlignment || 'left');
+                const spacingMode = (finalSettings.paragraphSpacing || 'normal');
+                const spacingConfig = (mode) => {
+                    if (mode === 'compact') return { line: 1.3, gap: 0.3 };
+                    if (mode === 'relaxed') return { line: 1.6, gap: 0.8 };
+                    return { line: 1.4, gap: 0.5 }; // normal
+                };
+                const spacing = spacingConfig(spacingMode);
                 
+                // === ENHANCED THEME COLOR SYSTEM ===
                 const themeColorHex = finalSettings.themeColor || '#268ca7';
-                const titleColor = rgb(
-                    parseInt(themeColorHex.substr(1, 2), 16) / 255, 
-                    parseInt(themeColorHex.substr(3, 2), 16) / 255, 
-                    parseInt(themeColorHex.substr(5, 2), 16) / 255
-                );
-                const textColor = rgb(0, 0, 0);
+                const themeColorSecondaryHex = finalSettings.themeColorSecondary || '#1e6a80';
+                const themeColorTextHex = finalSettings.themeColorText || '#333333';
+                const themeColorBgHex = finalSettings.themeColorBg || '#f7f8fa';
+
+                // Convert hex colors to RGB
+                const hexToRgb = (hex) => {
+                    if (!hex || typeof hex !== 'string') return rgb(0, 0, 0);
+                    const cleanHex = hex.replace('#', '');
+                    if (cleanHex.length !== 6) return rgb(0, 0, 0);
+
+                    return rgb(
+                        parseInt(cleanHex.substr(0, 2), 16) / 255,
+                        parseInt(cleanHex.substr(2, 2), 16) / 255,
+                        parseInt(cleanHex.substr(4, 2), 16) / 255
+                    );
+                };
+
+                const titleColor = hexToRgb(themeColorHex);
+                const secondaryColor = hexToRgb(themeColorSecondaryHex);
+                const textColor = hexToRgb(themeColorTextHex);
+                const backgroundColor = hexToRgb(themeColorBgHex);
                 const baseFontSize = this.getBaseFontSize(finalSettings);
                 
                 const [pageWidth, pageHeight] = PageSizes.A4;
@@ -1759,7 +2833,7 @@
 
                     // Draw Logo
                     if (finalSettings.logoUrl) {
-                        const logoImage = await this.fetchAndEmbedImage(pdfDoc, finalSettings.logoUrl);
+                        const logoImage = await this.fetchAndEmbedImage(pdfDoc, finalSettings.logoUrl, 200);
                         if (logoImage) {
                             const dims = logoImage.scale(1); 
                             const logoWidth = Math.min(dims.width, 200);
@@ -1794,10 +2868,12 @@
                         page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
                         y: footerY, maxWidth: maxWidth, align: 'left', margin: margin
                     });
-                    this.drawText(String(pageCount), {
-                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
-                        y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
-                    });
+                    if (finalSettings.includePageNumbers !== false) {
+                        this.drawText(String(pageCount), {
+                            page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                            y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
+                        });
+                    }
                     pageCount++;
                 }
 
@@ -1813,12 +2889,15 @@
                         page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
                         y: footerY, maxWidth: maxWidth, align: 'left', margin: margin
                     });
-                    this.drawText(String(pageCount), {
-                        page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
-                        y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
-                    });
+                    if (finalSettings.includePageNumbers !== false) {
+                        this.drawText(String(pageCount), {
+                            page, font: regular, size: 9, color: rgb(0.5, 0.5, 0.5), 
+                            y: footerY, maxWidth: maxWidth, align: 'right', margin: margin
+                        });
+                    }
                     
                     page = pdfDoc.addPage(PageSizes.A4);
+                    // Running header removed per user request
                     pageCount++;
                     return pageHeight - margin;
                 };
@@ -1838,13 +2917,131 @@
                     return parsed;
                 };
 
-                const checkY = (textHeight, minSpace = 0) => {
-                    // Add extra space buffer to prevent tight fits
-                    const buffer = 20;
-                    if (currentY - textHeight - minSpace - buffer < margin) {
+                // === SMART PAGE BREAK SYSTEM ===
+                const checkY = (requiredHeight, options = {}) => {
+                    const {
+                        preventOrphan = true,
+                        keepWithNext = false,
+                        minSpaceAfter = 0,
+                        forceBreak = false
+                    } = options;
+
+                    const footerHeight = 30; // Space for footer
+                    const safetyBuffer = 15; // Extra safety margin
+                    const minContentHeight = baseFontSize * 1.5; // Minimum content that should remain
+
+                    let availableSpace = currentY - margin - footerHeight - safetyBuffer;
+
+                    // If we need to keep content with next element, reserve more space
+                    if (keepWithNext) {
+                        availableSpace -= minContentHeight;
+                    }
+
+                    // For orphan prevention, ensure we don't leave just a few lines
+                    if (preventOrphan && availableSpace < requiredHeight + minContentHeight) {
+                        availableSpace = 0; // Force page break
+                    }
+
+                    // Force break if explicitly requested
+                    if (forceBreak || availableSpace < requiredHeight + minSpaceAfter) {
                         currentY = addPage();
                     }
                     return currentY;
+                };
+
+                // Enhanced table height calculation
+                const calculateTableHeight = (tableData, font, size, maxWidth) => {
+                    if (!tableData || !tableData.rows || tableData.rows.length === 0) return 0;
+
+                    let totalHeight = 0;
+                    const cellPadding = 8;
+                    const borderWidth = 1;
+
+                    // Calculate column widths based on content
+                    const colCount = Math.max(...tableData.rows.map(row => row.length));
+                    const colWidths = new Array(colCount).fill(maxWidth / colCount);
+
+                    // Refine column widths based on content
+                    tableData.rows.forEach(row => {
+                        row.forEach((cell, colIndex) => {
+                            if (cell && cell.text) {
+                                const cellText = cell.text.trim();
+                                const textWidth = font.widthOfTextAtSize(cellText, size);
+                                if (textWidth > colWidths[colIndex] - (cellPadding * 2)) {
+                                    // Redistribute width if this column needs more space
+                                    const excess = textWidth - (colWidths[colIndex] - (cellPadding * 2));
+                                    colWidths[colIndex] = Math.min(textWidth + (cellPadding * 2), maxWidth * 0.4);
+                                }
+                            }
+                        });
+                    });
+
+                    // Normalize column widths to fit maxWidth
+                    const totalWidth = colWidths.reduce((sum, width) => sum + width, 0);
+                    if (totalWidth > maxWidth) {
+                        const scale = maxWidth / totalWidth;
+                        colWidths.forEach((width, index) => {
+                            colWidths[index] = width * scale;
+                        });
+                    }
+
+                    // Calculate height for each row
+                    tableData.rows.forEach(row => {
+                        let maxRowHeight = size + (cellPadding * 2) + borderWidth;
+
+                        row.forEach((cell, colIndex) => {
+                            if (cell && cell.text) {
+                                const cellText = cell.text.trim();
+                                const availableWidth = colWidths[colIndex] - (cellPadding * 2) - borderWidth;
+                                const lines = this.wrapText(cellText, font, size, availableWidth);
+                                const cellHeight = (lines.length * (size * 1.2)) + (cellPadding * 2) + borderWidth;
+                                maxRowHeight = Math.max(maxRowHeight, cellHeight);
+                            }
+                        });
+
+                        totalHeight += maxRowHeight;
+                    });
+
+                    return totalHeight + 20; // Add some extra padding
+                };
+
+                // Smart table splitting for large tables
+                const splitTableIfNeeded = (tableData, font, size, maxWidth, maxPageHeight) => {
+                    const tableHeight = calculateTableHeight(tableData, font, size, maxWidth);
+
+                    if (tableHeight <= maxPageHeight) {
+                        return [tableData]; // Table fits on one page
+                    }
+
+                    // Split table into chunks
+                    const chunks = [];
+                    const headerRow = tableData.rows[0]; // Assume first row is header
+                    const dataRows = tableData.rows.slice(1);
+
+                    let currentChunk = { rows: [headerRow] };
+                    let currentHeight = calculateTableHeight({ rows: [headerRow] }, font, size, maxWidth);
+                    const maxChunkHeight = maxPageHeight * 0.8; // Leave some margin
+
+                    for (const row of dataRows) {
+                        const testChunk = { rows: [...currentChunk.rows, row] };
+                        const testHeight = calculateTableHeight(testChunk, font, size, maxWidth);
+
+                        if (testHeight > maxChunkHeight) {
+                            // Add current chunk and start new one
+                            chunks.push(currentChunk);
+                            currentChunk = { rows: [headerRow, row] }; // Repeat header
+                            currentHeight = calculateTableHeight(currentChunk, font, size, maxWidth);
+                        } else {
+                            currentChunk.rows.push(row);
+                            currentHeight = testHeight;
+                        }
+                    }
+
+                    if (currentChunk.rows.length > 1) {
+                        chunks.push(currentChunk);
+                    }
+
+                    return chunks;
                 };
 
                 for (const token of tokens) {
@@ -1853,6 +3050,7 @@
                     switch (token.type) {
                         case 'heading':
                             let headingSize;
+                            const headingStyle = (finalSettings.headingStylePreset || 'clean');
                             if (token.depth === 1) headingSize = 24;
                             else if (token.depth === 2) headingSize = 18;
                             else if (token.depth === 3) headingSize = 14;
@@ -1874,49 +3072,93 @@
                                 default: headerFont = fonts.semibold || fonts.bold || fonts.regular;
                             }
 
+                            // Adjust sizes/margins by style preset
+                            if (headingStyle === 'bold') {
+                                headingSize += (token.depth === 1 ? 2 : 1);
+                            } else if (headingStyle === 'minimalist') {
+                                headingSize -= (token.depth >= 3 ? 1 : 0);
+                            }
+
                             // Calculate actual text height including wrapping
                             const headingLines = this.wrapText(token.text, headerFont, headingSize, maxWidth);
                             textHeight = headingLines.length * (headingSize * 1.4);
-                            
-                            // Ensure heading has enough space (heading + spacing + some content)
-                            const minContentSpace = baseFontSize * 2; // At least 2 lines of content
-                            currentY = checkY(textHeight + 12, minContentSpace);
-                            
+
+                            // Smart page break for headings - prevent orphan headings
+                            let headingSpacing = token.depth === 1 ? 32 : (token.depth === 2 ? 22 : 14);
+                            if (headingStyle === 'bold') headingSpacing += 2;
+                            if (headingStyle === 'minimalist') headingSpacing -= 2;
+                            currentY = checkY(textHeight + headingSpacing, {
+                                preventOrphan: true,
+                                keepWithNext: true,
+                                minSpaceAfter: baseFontSize
+                            });
+
+                            // Add extra space before H1 headings and force new page if needed
+                            if (token.depth === 1 && currentY < pageHeight - margin - 100) {
+                                currentY = checkY(0, { forceBreak: true });
+                            }
+
                             currentY = this.drawText(token.text, {
-                                page, font: headerFont, size: headingSize, color: titleColor, 
+                                page, font: headerFont, size: headingSize, color: titleColor,
                                 y: currentY, maxWidth: maxWidth, align: 'left', margin: margin
                             });
-                            currentY -= 12;
+                            currentY -= headingSpacing;
                             break;
                             
                         case 'paragraph':
                             const lines = this.wrapText(token.text, regular, baseFontSize, maxWidth);
-                            textHeight = lines.length * (baseFontSize * 1.4);
-                            
-                            // For paragraphs, ensure we have space for the full paragraph
-                            currentY = checkY(textHeight, baseFontSize * 0.5);
-                            
+                            textHeight = lines.length * (baseFontSize * spacing.line);
+
+                            // Smart page break for paragraphs - prevent orphans
+                            currentY = checkY(textHeight, {
+                                preventOrphan: true,
+                                minSpaceAfter: baseFontSize * spacing.gap
+                            });
+
                             // Use styled text rendering for paragraphs to handle bold/italic
                             currentY = this.drawStyledText(token.text, {
-                                page, font: regular, boldFont: light, italicFont: italic, size: baseFontSize, color: textColor, 
-                                y: currentY, maxWidth: maxWidth, align: 'left', margin: margin, lineHeight: baseFontSize * 1.4
+                                page, font: regular, boldFont: light, italicFont: italic, size: baseFontSize, color: textColor,
+                                y: currentY, maxWidth: maxWidth, align: paragraphAlign, margin: margin, lineHeight: baseFontSize * spacing.line
                             });
-                            currentY -= (baseFontSize * 0.5);
+                            currentY -= (baseFontSize * spacing.gap);
                             break;
 
                         case 'list':
                             let listY = currentY;
                             let itemIndex = 0;
-                            
-                            // Check if we have enough space for at least the first item
-                            const firstItem = token.items[0];
-                            if (firstItem) {
-                                const bullet = token.ordered ? '1. ' : '• ';
-                                const firstItemText = bullet + firstItem.text;
-                                const firstItemLines = this.wrapText(firstItemText, regular, baseFontSize, maxWidth - 20);
-                                const firstItemHeight = firstItemLines.length * (baseFontSize * 1.4);
-                                
-                                if (listY - firstItemHeight - 20 < margin) {
+
+                            // Calculate total list height for smart page breaking
+                            let totalListHeight = 0;
+                            const itemHeights = [];
+
+                            for (const item of token.items) {
+                                const bullet = token.ordered ? `${itemIndex + 1}. ` : '• ';
+                                const itemText = bullet + item.text;
+                                const itemLines = this.wrapText(itemText, regular, baseFontSize, maxWidth - 20);
+                                const itemHeight = itemLines.length * (baseFontSize * spacing.line);
+                                itemHeights.push(itemHeight);
+                                totalListHeight += itemHeight + (baseFontSize * spacing.gap);
+                            }
+
+                            // Check if entire list fits, if not, be smart about breaking
+                            const availableSpace = listY - margin - 30; // 30 for footer + buffer
+
+                            if (totalListHeight > availableSpace && availableSpace > baseFontSize * 3) {
+                                // Try to fit as many items as possible
+                                let accumulatedHeight = 0;
+                                let itemsToKeep = 0;
+
+                                for (let i = 0; i < itemHeights.length; i++) {
+                                    if (accumulatedHeight + itemHeights[i] + (baseFontSize * spacing.gap) <= availableSpace - baseFontSize * 2) {
+                                        accumulatedHeight += itemHeights[i] + (baseFontSize * spacing.gap);
+                                        itemsToKeep++;
+                                    } else {
+                                        break;
+                                    }
+                                }
+
+                                if (itemsToKeep === 0) {
+                                    // Not enough space for even one item, start new page
                                     listY = addPage();
                                 }
                             }
@@ -1925,18 +3167,18 @@
                                 const bullet = token.ordered ? `${itemIndex + 1}. ` : '• ';
                                 const itemText = bullet + item.text;
                                 const itemLines = this.wrapText(itemText, regular, baseFontSize, maxWidth - 20);
-                                textHeight = itemLines.length * (baseFontSize * 1.4);
-                                
-                                // Check if we need a new page for this item
-                                if (listY - textHeight - 10 < margin) {
+                                textHeight = itemLines.length * (baseFontSize * spacing.line);
+
+                                // Smart page break for list items
+                                if (listY - textHeight - 15 < margin) {
                                     listY = addPage();
                                 }
 
                                 listY = this.drawStyledText(itemText, {
                                     page, font: regular, boldFont: light, italicFont: italic, size: baseFontSize, color: textColor,
-                                    y: listY, maxWidth: maxWidth - 20, align: 'left', margin: margin + 20, lineHeight: baseFontSize * 1.4
+                                    y: listY, maxWidth: maxWidth - 20, align: paragraphAlign, margin: margin + 20, lineHeight: baseFontSize * spacing.line
                                 });
-                                listY -= (baseFontSize * 0.5);
+                                listY -= (baseFontSize * spacing.gap);
                                 itemIndex++;
                             }
                             currentY = listY;
@@ -1944,8 +3186,14 @@
 
                         case 'blockquote':
                             const bqLines = this.wrapText(token.text, italic, baseFontSize, maxWidth - 20);
-                            textHeight = bqLines.length * (baseFontSize * 1.4);
-                            currentY = checkY(textHeight + 10);
+                            textHeight = bqLines.length * (baseFontSize * 1.4) + 10; // Add padding
+
+                            // Smart page break for blockquotes
+                            currentY = checkY(textHeight, {
+                                preventOrphan: true,
+                                minSpaceAfter: baseFontSize
+                            });
+
                             page.drawRectangle({
                                 x: margin,
                                 y: currentY - textHeight - 5,
@@ -1955,28 +3203,33 @@
                             });
                             currentY -= 5;
                             currentY = this.drawText(token.text, {
-                                page, font: italic, size: baseFontSize, color: rgb(0.2, 0.2, 0.2), 
+                                page, font: italic, size: baseFontSize, color: rgb(0.2, 0.2, 0.2),
                                 y: currentY, maxWidth: maxWidth - 20, align: 'left', margin: margin + 10, lineHeight: baseFontSize * 1.4
                             });
                             currentY -= (baseFontSize + 5);
                             break;
 
                         case 'image':
-                            currentY = checkY(200);
-                            const img = await this.fetchAndEmbedImage(pdfDoc, token.href);
+                            const img = await this.fetchAndEmbedImage(pdfDoc, token.href, maxWidth);
                             if (img) {
                                 const dims = img.scale(1);
                                 const imgWidth = Math.min(dims.width, maxWidth);
                                 const imgHeight = (imgWidth / dims.width) * dims.height;
-                                currentY = checkY(imgHeight + 12);
-                                
+                                const totalImageHeight = imgHeight + 24; // Add padding
+
+                                // Smart page break for images - ensure image fits with some context
+                                currentY = checkY(totalImageHeight, {
+                                    preventOrphan: true,
+                                    minSpaceAfter: baseFontSize
+                                });
+
                                 page.drawImage(img, {
                                     x: (pageWidth - imgWidth) / 2,
                                     y: currentY - imgHeight,
                                     width: imgWidth,
                                     height: imgHeight,
                                 });
-                                currentY -= (imgHeight + 12);
+                                currentY -= (imgHeight + 24);
                             }
                             break;
                             
@@ -1985,7 +3238,10 @@
                             break;
                             
                         case 'hr':
-                            currentY = checkY(12);
+                            currentY = checkY(12, {
+                                preventOrphan: true,
+                                minSpaceAfter: baseFontSize
+                            });
                             page.drawLine({
                                 start: { x: margin, y: currentY - 6 },
                                 end: { x: pageWidth - margin, y: currentY - 6 },
@@ -1994,7 +3250,63 @@
                             });
                             currentY -= 12;
                             break;
-                            
+
+                        case 'table':
+                            // Convert table tokens to our format
+                            const tableData = {
+                                rows: token.rows.map(row =>
+                                    row.map(cell => ({
+                                        text: cell.text || '',
+                                        style: cell.style || {}
+                                    }))
+                                )
+                            };
+
+                            // Calculate table height and split if needed
+                            const maxPageHeight = pageHeight - margin - 50; // Leave space for footer
+                            const tableChunks = splitTableIfNeeded(tableData, regular, baseFontSize, maxWidth, maxPageHeight);
+
+                            for (let chunkIndex = 0; chunkIndex < tableChunks.length; chunkIndex++) {
+                                const chunk = tableChunks[chunkIndex];
+                                const chunkHeight = calculateTableHeight(chunk, regular, baseFontSize, maxWidth);
+
+                                // Smart page break for table chunks
+                                currentY = checkY(chunkHeight, {
+                                    preventOrphan: true,
+                                    minSpaceAfter: baseFontSize
+                                });
+
+                                // Draw table
+                                this.drawTable(chunk, {
+                                    page,
+                                    font: regular,
+                                    size: baseFontSize,
+                                    color: textColor,
+                                    x: margin,
+                                    y: currentY,
+                                    width: maxWidth,
+                                    titleColor: titleColor
+                                });
+
+                                currentY -= chunkHeight;
+
+                                // Add continuation indicator if there are more chunks
+                                if (chunkIndex < tableChunks.length - 1) {
+                                    currentY = this.drawText('(Table continues on next page)', {
+                                        page,
+                                        font: italic,
+                                        size: baseFontSize * 0.8,
+                                        color: rgb(0.5, 0.5, 0.5),
+                                        y: currentY,
+                                        maxWidth: maxWidth,
+                                        align: 'center',
+                                        margin: margin
+                                    });
+                                    currentY -= baseFontSize * 1.5;
+                                }
+                            }
+                            break;
+
                         default:
                             console.log('Unhandled token type:', token.type, token);
                     }
@@ -2021,6 +3333,15 @@
                 
                 const pdfDoc = await PDFDocument.create();
                 pdfDoc.registerFontkit(fontkit);
+                // PDF metadata for professional output
+                try {
+                    if (finalSettings && finalSettings.courseTitle) pdfDoc.setTitle(String(finalSettings.courseTitle));
+                    if (finalSettings && finalSettings.instructorName) pdfDoc.setAuthor(String(finalSettings.instructorName));
+                    if (finalSettings && finalSettings.footerText) pdfDoc.setSubject(String(finalSettings.footerText));
+                    pdfDoc.setCreator('mdMan');
+                    pdfDoc.setProducer('mdMan (pdf-lib)');
+                    pdfDoc.setCreationDate(new Date());
+                } catch (metaErr) { /* ignore metadata errors */ }
                 
                 // Load fonts based on the finalSettings.fontFamily key
                 const fonts = await this.loadFonts(pdfDoc, finalSettings.fontFamily);
